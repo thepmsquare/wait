@@ -145,3 +145,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://wait.thepmsquare.com",
+]
