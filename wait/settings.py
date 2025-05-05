@@ -29,7 +29,7 @@ SECRET_KEY = "django-insecure-sa-dc&)730_w-7hzc0vd)^v0@#i$rcn%pb4l16*eo!w+@=q5t2
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "raspi.thepmsquare.com",
+    ".thepmsquare.com",
     "localhost",
     "127.0.0.1",
 ]
