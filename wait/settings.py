@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
@@ -164,3 +165,12 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+ACCOUNT_VERIFICATION_METHOD = "none"
+ACCOUNT_LOGIN_METHODS = {"email"}
+
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+
+
+SOCIALACCOUNT_LOGIN_ON_GET = True

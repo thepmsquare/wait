@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
-
+{% load socialaccount %}
 {% block title %}sign up | wait{% endblock %}
 
 {% block extra_css %}
@@ -50,6 +50,11 @@
                         <button type="submit" class="btn btn-dark">sign up</button>
                     </div>
                 </form>
+                <p class="text-center mt-3">
+                    <a href="{% provider_login_url 'google' %}" class="btn btn-outline-dark w-100">sign in with
+                        google</a>
+                </p>
+
                 <p class="text-center mt-3 text-muted small">
                     already have an account?
                     <a href="{% url 'login' %}" class="text-decoration-none">log in here</a>.
