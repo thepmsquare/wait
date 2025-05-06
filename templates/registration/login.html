@@ -1,36 +1,61 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}login | wait{% endblock %}
+{% block title %}sign up | wait{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-text,
+    .helptext {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      position: absolute;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      z-index: 10;
+      left: 0;
+      top: 100%;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .form-group {
+      position: relative;
+    }
+
+    .form-group:hover .form-text,
+    .form-group:focus-within .form-text,
+    .form-group:hover .helptext,
+    .form-group:focus-within .helptext {
+      opacity: 1;
+      visibility: visible;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="card-title text-center mb-4">Log in</h2>
-                <form method="post">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-4 fw-semibold" style="letter-spacing: -0.5px;">sign up</h2>
+                <form method="post" novalidate>
                     {% csrf_token %}
                     {{ form|crispy }}
-                    <div class="d-grid gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">Log in</button>
+                    <div class="d-grid mt-3">
+                        <button type="submit" class="btn btn-dark">sign up</button>
                     </div>
                 </form>
-
-                <!--                <p class="text-center mt-3">-->
-                <!--                    <a href="{% url 'password_reset' %}">Forgot your password?</a>-->
-                <!--                </p>-->
-
-
-                <p class="text-center mt-2">
-                    Don't have an account? <a href="{% url 'signup' %}">Sign up here</a>.
+                <p class="text-center mt-3 text-muted small">
+                    already have an account?
+                    <a href="{% url 'login' %}" class="text-decoration-none">log in here</a>.
                 </p>
-
-
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}

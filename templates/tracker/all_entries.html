@@ -3,85 +3,88 @@
 {% block title %}all entries | wait{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="text-center mb-4">All entries</h1>
 
-    {# Add the button to add a new entry here #}
-    <div class="text-end mb-3">
-        <a href="{% url 'index' %}" class="btn btn-success">Add New Entry</a>
-    </div>
+<h1 class="text-center mb-4">All entries</h1>
 
-    {# Change this check to use page_obj #}
-    {% if page_obj.object_list %}
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th scope="col">Timestamp</th>
-            <th scope="col">Weight</th>
-            <th scope="col">Actions</th>
-        </tr>
-        </thead>
-        <tbody id="entries-table-body">
-        {# Iterate over the objects on the current page #}
-        {% for entry in page_obj.object_list %}
-        <tr data-timestamp="{{ entry.timestamp|date:'c' }}">
-            <td class="timestamp"></td>
-            <td>{{ entry.weight }}</td>
-            <td>
-                <a href="{% url 'edit_entry' entry.id %}" class="btn btn-warning btn-sm">Edit</a>
-                <a href="{% url 'delete_entry' entry.id %}" class="btn btn-danger btn-sm"
-                   onclick="return confirm('Are you sure you want to delete this entry?');">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+{# Add the button to add a new entry here #}
+<div class="text-end mb-3">
+    <a href="{% url 'index' %}" class="btn btn-success">Add New Entry</a>
+</div>
 
-    {# --- Pagination Controls --- #}
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-            {# Previous button #}
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
-            </li>
-            {% else %}
-            <li class="page-item disabled">
-                <span class="page-link" aria-hidden="true">&laquo;</span>
-            </li>
-            {% endif %}
-
-            {# Page numbers #}
-            {% for i in page_obj.paginator.page_range %}
-            {% if page_obj.number == i %}
-            <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
-            {% else %}
-            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-            {% endif %}
+{# Add card container for better structure #}
+<div class="card shadow-sm">
+    <div class="card-body">
+        {# Change this check to use page_obj #}
+        {% if page_obj.object_list %}
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Weight</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="entries-table-body">
+            {# Iterate over the objects on the current page #}
+            {% for entry in page_obj.object_list %}
+            <tr data-timestamp="{{ entry.timestamp|date:'c' }}">
+                <td class="timestamp"></td>
+                <td>{{ entry.weight }}</td>
+                <td>
+                    <a href="{% url 'edit_entry' entry.id %}" class="btn btn-warning btn-sm">Edit</a>
+                    <a href="{% url 'delete_entry' entry.id %}" class="btn btn-danger btn-sm"
+                       onclick="return confirm('Are you sure you want to delete this entry?');">Delete</a>
+                </td>
+            </tr>
             {% endfor %}
+            </tbody>
+        </table>
 
-            {# Next button #}
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            </li>
-            {% else %}
-            <li class="page-item disabled">
-                <span class="page-link" aria-hidden="true">&raquo;</span>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {# --- End Pagination Controls --- #}
+        {# --- Pagination Controls --- #}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {# Previous button #}
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&laquo;</span>
+                </li>
+                {% endif %}
 
-    {% else %}
-    <p class="text-center text-muted">No entries found.</p>
-    {% endif %}
+                {# Page numbers #}
+                {% for i in page_obj.paginator.page_range %}
+                {% if page_obj.number == i %}
+                <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                {% endif %}
+                {% endfor %}
 
+                {# Next button #}
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&raquo;</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {# --- End Pagination Controls --- #}
+
+        {% else %}
+        <p class="text-center text-muted">No entries found.</p>
+        {% endif %}
+    </div>
 </div>
 
 <script>

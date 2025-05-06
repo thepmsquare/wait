@@ -4,6 +4,8 @@
 {% block title %}edit entry | wait{% endblock %}
 
 {% block content %}
+
+<h1 class="mb-4 text-center">Edit entry</h1>
 <div class="card shadow-sm mb-4">
     <div class="card-header">Edit entry</div>
     <div class="card-body">
@@ -29,10 +31,11 @@
                 <button type="submit" class="btn btn-primary">Save changes</button>
             </div>
         </form>
-
     </div>
 </div>
+
 {% endblock %}
+
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -60,8 +63,6 @@
           tsInput.value = new Date(tsInput.value).toISOString().slice(0, 19);
           e.target.submit();
         });
-
-
     });
 </script>
 {% endblock %}
