@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     "tracker",
     "crispy_forms",
     "crispy_bootstrap5",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
 ]
 
 MIDDLEWARE = [
@@ -57,6 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "wait.urls"
@@ -148,3 +152,15 @@ STATICFILES_DIRS = [
 CSRF_TRUSTED_ORIGINS = [
     "https://wait.thepmsquare.com",
 ]
+SITE_ID = 1
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "Scope": [
+            "profile",
+            "email",
+        ],
+        "Auth_Params": {
+            "access_type": "online",
+        },
+    }
+}
