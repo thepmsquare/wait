@@ -42,24 +42,32 @@
     <div class="col-md-6 col-lg-4">
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-                <h2 class="text-center mb-4 fw-semibold" style="letter-spacing: -0.5px;">sign up</h2>
+                <h2 class="text-center mb-4 fw-semibold" style="letter-spacing: -0.5px;">log in</h2>
                 <form method="post" novalidate>
                     {% csrf_token %}
                     {{ form|crispy }}
                     <div class="d-grid mt-3">
-                        <button type="submit" class="btn btn-dark">sign up</button>
+                        <button type="submit" class="btn btn-dark">log in</button>
                     </div>
                 </form>
+                <div class="d-flex align-items-center my-4">
+                    <hr class="flex-grow-1">
+                    <span class="px-2 text-muted small">or</span>
+                    <hr class="flex-grow-1">
+                </div>
 
+                <p class="text-center mt-3"><a href="{% provider_login_url 'google' %}"
+                                               class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="google logo"
+                         width="20" height="20">
+                    <span>continue with a google account</span>
+                </a>
 
-                <p class="text-center mt-3">
-                    <a href="{% provider_login_url 'google' %}" class="btn btn-outline-dark w-100">sign in with
-                        google</a>
                 </p>
 
                 <p class="text-center mt-3 text-muted small">
-                    already have an account?
-                    <a href="{% url 'login' %}" class="text-decoration-none">log in here</a>.
+                    don't have an account?
+                    <a href="{% url 'signup' %}" class="text-decoration-none">sign up here</a>.
                 </p>
             </div>
         </div>

@@ -9,7 +9,7 @@ COPY . /app/
 
 EXPOSE 30001
 
-CMD ["sh", "-c", "python migrate && python manage.py manage.py runserver 0.0.0.0:30001"]
+CMD ["sh", "-c", "python migrate && python manage.py runserver 0.0.0.0:30001"]
 
 # Uncomment for debugging
 # CMD ["bash", "-c", "while true; do sleep 60; done"]

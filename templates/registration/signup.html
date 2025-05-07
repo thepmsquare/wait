@@ -50,9 +50,18 @@
                         <button type="submit" class="btn btn-dark">sign up</button>
                     </div>
                 </form>
-                <p class="text-center mt-3">
-                    <a href="{% provider_login_url 'google' %}" class="btn btn-outline-dark w-100">sign in with
-                        google</a>
+                <div class="d-flex align-items-center my-4">
+                    <hr class="flex-grow-1">
+                    <span class="px-2 text-muted small">or</span>
+                    <hr class="flex-grow-1">
+                </div>
+                <p class="text-center mt-3"><a href="{% provider_login_url 'google' %}"
+                                               class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="google logo"
+                         width="20" height="20">
+                    <span>continue with a google account</span>
+                </a>
+
                 </p>
 
                 <p class="text-center mt-3 text-muted small">
