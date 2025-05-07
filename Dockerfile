@@ -10,8 +10,7 @@ COPY . /app/
 EXPOSE 30001
 
 
-ENTRYPOINT ["python", "manage.py", "migrate"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:30001"]
+CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:30001"]
 
 # Uncomment for debugging
 # CMD ["bash", "-c", "while true; do sleep 60; done"]
