@@ -52,6 +52,7 @@ wait
 {% endblock %}
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
       // prefill timestamp
@@ -86,16 +87,18 @@ wait
       const labels = entries.map((e) => new Date(e.timestamp).toLocaleString());
       const data = entries.map((e) => e.weight);
       const ctx = document.getElementById("weightChart").getContext("2d");
+      const dataPoints = entries.map((e) => ({
+        x: e.timestamp,
+        y: e.weight,
+      }));
       new Chart(ctx, {
         type: "line",
         data: {
-          labels: labels,
           datasets: [
             {
               label: "weight",
-              data: data,
+              data: dataPoints,
               fill: false,
-              tension: 0.1,
             },
           ],
         },
@@ -105,14 +108,16 @@ wait
           plugins: {
             legend: { display: false },
           },
-        scales: {
+          scales: {
             x: {
               type: "time",
               time: {
-                tooltipFormat: "MMM d, h:mm a",
-                unit: "minute",
+                unit: "day",
               },
-              title: { display: true, text: "Time" },
+              title: {
+                display: true,
+                text: "Time",
+              },
             },
             y: { display: true, title: { display: true, text: "Weight" } },
           },
