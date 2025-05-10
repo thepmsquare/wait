@@ -105,8 +105,15 @@ wait
           plugins: {
             legend: { display: false },
           },
-          scales: {
-            x: { display: true, title: { display: true, text: "Time" } },
+        scales: {
+            x: {
+              type: "time",
+              time: {
+                tooltipFormat: "MMM d, h:mm a",
+                unit: "minute",
+              },
+              title: { display: true, text: "Time" },
+            },
             y: { display: true, title: { display: true, text: "Weight" } },
           },
         },
