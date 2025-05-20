@@ -1,9 +1,11 @@
 # Create your views here.
+import csv
 from datetime import datetime, time
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
@@ -11,7 +13,7 @@ from django.utils.timezone import localtime
 from django.views.generic.edit import CreateView
 
 from tracker.forms import WeightEntryForm
-from tracker.models import WeightEntry
+from .models import WeightEntry  # Assuming WeightEntry is your model
 
 
 @login_required
@@ -108,3 +110,22 @@ class SignUpView(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
+
+
+def export_entries_csv(request):
+    response = HttpResponse(content_type="text/csv")
+    now = datetime.now()
+    filename = f"wait_{now.strftime('%Y-%m-%d_%H%M%S')}.csv"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(["Timestamp", "Weight"])  # CSV header
+
+    # Fetch all entries and write them to the CSV
+    entries = WeightEntry.objects.all().order_by(
+        "timestamp"
+    )  # Order by timestamp for readability
+    for entry in entries:
+        writer.writerow([entry.timestamp, entry.weight])
+
+    return response

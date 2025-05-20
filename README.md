@@ -10,6 +10,10 @@ weight tracker for my personal user.
 
 ## changelog
 
+### v1.3.0
+
+- add export csv option.
+
 ### v1.2.0
 
 - update ui.
