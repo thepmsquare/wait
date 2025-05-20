@@ -122,9 +122,7 @@ def export_entries_csv(request):
     writer.writerow(["Timestamp", "Weight"])  # CSV header
 
     # Fetch all entries and write them to the CSV
-    entries = WeightEntry.objects.all().order_by(
-        "timestamp"
-    )  # Order by timestamp for readability
+    entries = WeightEntry.objects.filter(user=request.user).order_by("timestamp")
     for entry in entries:
         writer.writerow([entry.timestamp, entry.weight])
 
