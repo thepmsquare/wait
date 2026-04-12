@@ -1,38 +1,70 @@
-const CACHE_NAME = 'my-pwa-cache-v1';
-const urlsToCache = [
+const CACHE_NAME = 'wait-cache-v2';
+const STATIC_ASSETS = [
   '/',
   '/static/manifest.json',
-  '/static/favicon.ico', // You might want to cache favicon too
-  // Add paths to your essential CSS and JS files here, e.g.,
-  // '/static/css/style.css',
-  // '/static/js/main.js',
-  // Add Bootstrap CSS if served locally
-  // '/static/bootstrap/css/bootstrap.min.css',
-  // Add Bootstrap JS if served locally
-  // '/static/bootstrap/js/bootstrap.bundle.min.js',
+  '/static/favicon.ico',
+  '/static/css/style.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap',
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js',
 ];
 
+// install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[service worker] caching static assets');
+      return cache.addAll(STATIC_ASSETS);
+    })
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
+// activate event - cleanup old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('[service worker] clearing old cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
 
-        // No cache match - fetch from network
-        return fetch(event.request);
-      })
+// fetch event - stale-while-revalidate for assets, network-first for pages
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // handle navigation requests (html pages) - network first
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // handle static assets - stale-while-revalidate
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+        return networkResponse;
+      });
+      return cachedResponse || fetchPromise;
+    })
   );
 });

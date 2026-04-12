@@ -1,4 +1,7 @@
-# Create your models here.
+"""
+models for the tracker app.
+"""
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
@@ -6,8 +9,10 @@ from django.utils import timezone
 
 class WeightEntry(models.Model):
     """
-    Model to store a user's weight at a specific point in time.
+    model to store a user's weight at a specific point in time.
     """
+
+    objects = models.Manager()
 
     user = models.ForeignKey(
         get_user_model(),

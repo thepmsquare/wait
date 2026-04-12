@@ -7,6 +7,7 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 from django import forms
+
 from .models import WeightEntry
 
 

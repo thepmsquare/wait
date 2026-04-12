@@ -1,23 +1,26 @@
-# Create your views here.
+"""
+views for the tracker app.
+"""
 import csv
 from datetime import datetime, time
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.http import HttpResponse
-from django.shortcuts import redirect, render, get_object_or_404
-from django.urls import reverse_lazy, reverse
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.timezone import localtime
 from django.views.generic.edit import CreateView
 
 from tracker.forms import WeightEntryForm
+
 from .models import WeightEntry  # Assuming WeightEntry is your model
 
 
 @login_required
-def index(request):
+def index(request: HttpRequest) -> HttpResponse:
     """
     View for the index page. Displays the weight entry form,
     the last 10 weight entries for the logged-in user,
@@ -50,7 +53,7 @@ def index(request):
 
 
 @login_required
-def all_entries(request):
+def all_entries(request: HttpRequest) -> HttpResponse:
     """
     View to show all weight entries for the logged-in user.
     """
@@ -74,7 +77,7 @@ def all_entries(request):
 
 
 @login_required
-def delete_entry(request, entry_id):
+def delete_entry(request: HttpRequest, entry_id: int) -> HttpResponse:
     """
     View to delete a specific weight entry.
     """
@@ -84,7 +87,7 @@ def delete_entry(request, entry_id):
 
 
 @login_required
-def edit_entry(request, entry_id):
+def edit_entry(request: HttpRequest, entry_id: int) -> HttpResponse:
     """
     View to edit a specific weight entry.
     """
@@ -107,12 +110,20 @@ def edit_entry(request, entry_id):
 
 
 class SignUpView(CreateView):
+    """
+    view for user sign up.
+    """
+
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
 
-def export_entries_csv(request):
+@login_required
+def export_entries_csv(request: HttpRequest) -> HttpResponse:
+    """
+    view to export all weight entries as a csv file.
+    """
     response = HttpResponse(content_type="text/csv")
     now = datetime.now()
     filename = f"wait_{now.strftime('%Y-%m-%d_%H%M%S')}.csv"
