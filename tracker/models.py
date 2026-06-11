@@ -22,11 +22,11 @@ class WeightEntry(models.Model):
     weight = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        help_text="Enter your weight in kilograms",
+        help_text="enter your weight in kilograms",
     )
 
     timestamp = models.DateTimeField(
-        default=timezone.now, help_text="Date and time of the weight measurement."
+        default=timezone.now, help_text="date and time of the weight measurement."
     )
 
     class Meta:
@@ -35,8 +35,8 @@ class WeightEntry(models.Model):
         """
 
         ordering = ["-timestamp"]
-        verbose_name = "Weight Entry"
-        verbose_name_plural = "Weight Entries"
+        verbose_name = "weight entry"
+        verbose_name_plural = "weight entries"
 
     def __str__(self):
         """

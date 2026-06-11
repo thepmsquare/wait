@@ -5,7 +5,6 @@ import csv
 from datetime import datetime, time
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -14,7 +13,7 @@ from django.utils import timezone
 from django.utils.timezone import localtime
 from django.views.generic.edit import CreateView
 
-from tracker.forms import WeightEntryForm
+from tracker.forms import CustomUserCreationForm, WeightEntryForm
 
 from .models import WeightEntry  # Assuming WeightEntry is your model
 
@@ -114,7 +113,7 @@ class SignUpView(CreateView):
     view for user sign up.
     """
 
-    form_class = UserCreationForm
+    form_class = CustomUserCreationForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
@@ -130,7 +129,7 @@ def export_entries_csv(request: HttpRequest) -> HttpResponse:
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
-    writer.writerow(["Timestamp", "Weight"])  # CSV header
+    writer.writerow(["timestamp", "weight"])  # CSV header
 
     # Fetch all entries and write them to the CSV
     entries = WeightEntry.objects.filter(user=request.user).order_by("timestamp")
