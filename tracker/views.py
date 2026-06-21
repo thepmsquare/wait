@@ -37,14 +37,14 @@ def index(request: HttpRequest) -> HttpResponse:
             return redirect(reverse("index"))
     else:
         form = WeightEntryForm()
-    latest_entries = WeightEntry.objects.filter(user=request.user)[:10]
-    latest_entries_serialized = [
-        {"weight": entry.weight, "timestamp": localtime(entry.timestamp).isoformat()}
-        for entry in latest_entries
+    all_entries = WeightEntry.objects.filter(user=request.user)
+    all_entries_serialized = [
+        {"weight": float(entry.weight), "timestamp": localtime(entry.timestamp).isoformat()}
+        for entry in all_entries
     ]
     context = {
         "form": form,
-        "latest_entries": latest_entries_serialized,
+        "all_entries": all_entries_serialized,
         "todaymax": datetime.combine(timezone.now(), time.max),
     }
 

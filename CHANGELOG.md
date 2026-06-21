@@ -1,5 +1,9 @@
 # changelog
 
+## v1.8.0
+
+- update graph to show different durations on homepage.
+
 ## v1.7.0
 
 - bug fix in dockerfile.

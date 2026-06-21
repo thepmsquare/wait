@@ -54,18 +54,31 @@ wait
   </form>
 </div>
 
-{# last 10 entries card #}
+{# weight history card #}
 <div class="card">
-  <h2 class="card-title">last 10 entries</h2>
-  <div style="display: flex; justify-content: center; width: 100%;">
-    {{ latest_entries|json_script:"entries-data" }}
+  <h2 class="card-title" id="chart-card-title">weight history</h2>
+  
+  <div class="chart-filter-container">
+    <div class="segmented-control" role="group" aria-label="filter weight history by time range">
+      <button class="segmented-control-btn" data-range="7d">7d</button>
+      <button class="segmented-control-btn" data-range="1m">1m</button>
+      <button class="segmented-control-btn" data-range="3m">3m</button>
+      <button class="segmented-control-btn" data-range="6m">6m</button>
+      <button class="segmented-control-btn" data-range="1y">1y</button>
+      <button class="segmented-control-btn active" data-range="all">all</button>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+    {{ all_entries|json_script:"entries-data" }}
     <div
       style="position: relative; width: 100%; max-width: 600px; height: 300px"
     >
       <canvas id="weightChart" style="width: 100%; height: 100%" role="img" aria-label="line chart showing weight history over time">
-        <p>your last 10 weight entries are shown in a line chart. you can see all entries in detail on the show all entries page.</p>
+        <p>your weight entries are shown in a line chart over different selectable time periods. you can see all entries in detail on the show all entries page.</p>
       </canvas>
     </div>
+    <div id="chart-status" class="text-muted text-center small mt-3"></div>
   </div>
   <div class="mt-4">
     <a href="{% url 'all_entries' %}" style="text-decoration: none; display: block;">
@@ -124,7 +137,7 @@ wait
       y: e.weight,
     }));
     const ctx = document.getElementById("weightChart").getContext("2d");
-    new Chart(ctx, {
+    let weightChart = new Chart(ctx, {
       type: "line",
       data: {
         datasets: [
@@ -150,7 +163,7 @@ wait
           x: {
             type: "time",
             time: {
-              unit: "day",
+              // Set dynamically
             },
             grid: {
               color: outlineColor,
@@ -181,6 +194,70 @@ wait
         },
       },
     });
+
+    const statusEl = document.getElementById("chart-status");
+
+    function updateChart(range) {
+      const now = new Date();
+      let cutoff = null;
+      let timeUnit = "day";
+
+      if (range === "7d") {
+        cutoff = new Date();
+        cutoff.setDate(now.getDate() - 7);
+        timeUnit = "day";
+      } else if (range === "1m") {
+        cutoff = new Date();
+        cutoff.setMonth(now.getMonth() - 1);
+        timeUnit = "day";
+      } else if (range === "3m") {
+        cutoff = new Date();
+        cutoff.setMonth(now.getMonth() - 3);
+        timeUnit = "month";
+      } else if (range === "6m") {
+        cutoff = new Date();
+        cutoff.setMonth(now.getMonth() - 6);
+        timeUnit = "month";
+      } else if (range === "1y") {
+        cutoff = new Date();
+        cutoff.setFullYear(now.getFullYear() - 1);
+        timeUnit = "month";
+      } else {
+        // all
+        timeUnit = undefined; // Auto-scale
+      }
+
+      const filteredData = cutoff 
+        ? dataPoints.filter(dp => new Date(dp.x) >= cutoff)
+        : dataPoints;
+
+      weightChart.data.datasets[0].data = filteredData;
+      
+      if (timeUnit) {
+        weightChart.options.scales.x.time.unit = timeUnit;
+      } else {
+        delete weightChart.options.scales.x.time.unit;
+      }
+
+      weightChart.update();
+
+      if (statusEl) {
+        statusEl.textContent = `showing ${filteredData.length} entry${filteredData.length === 1 ? '' : 's'}`;
+      }
+    }
+
+    // Add click listeners to filter buttons
+    const filterButtons = document.querySelectorAll(".segmented-control-btn");
+    filterButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        filterButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        updateChart(btn.getAttribute("data-range"));
+      });
+    });
+
+    // Initialize with default range (all)
+    updateChart("all");
   });
 </script>
 {% endblock %}
