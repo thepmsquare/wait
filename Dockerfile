@@ -1,14 +1,15 @@
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.12-slim
 
 WORKDIR /app
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH"
 
 # install dependencies
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock /app/
+RUN uv sync --frozen --no-install-project --no-dev
 
 # copy project
 COPY . /app/
@@ -23,3 +24,4 @@ EXPOSE 30001
 
 # use entrypoint script to handle migrations and startup
 ENTRYPOINT ["/app/entrypoint.sh"]
+
