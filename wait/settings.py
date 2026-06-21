@@ -163,6 +163,11 @@ CSRF_TRUSTED_ORIGINS = [
 SITE_ID = 1
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
+        "APP": {
+            "client_id": config("GOOGLE_CLIENT_ID", default="placeholder-client-id.apps.googleusercontent.com"),
+            "secret": config("GOOGLE_CLIENT_SECRET", default="placeholder-secret"),
+            "key": "",
+        },
         "Scope": [
             "profile",
             "email",

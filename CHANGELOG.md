@@ -1,6 +1,12 @@
 # changelog
 
-## v1.5.0
+## v1.6.0
+
+- add oauth config to **env**.
+- bug fix in dockerfile.
+- add documentation on how to start the project.
+
+## v1.5.0 (unstable)
 
 - improve accessibility.
 - move to uv.
