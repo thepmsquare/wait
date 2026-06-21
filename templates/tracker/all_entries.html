@@ -4,109 +4,112 @@
 
 {% block content %}
 
-<h1 class="text-center mb-4">all entries</h1>
+<h1>all entries</h1>
 
-{# add the button to add a new entry here #}
-<div class="text-end mb-3">
-  <a href="{% url 'index' %}" class="btn btn-success">add new entry</a>
-  <a href="{% url 'export_entries_csv' %}" class="btn btn-info">export csv</a>
+<div class="actions-row">
+  <a href="{% url 'export_entries_csv' %}" style="text-decoration: none; margin-right: 8px;">
+    <md-outlined-button>
+      <span slot="icon" class="material-symbols-outlined">download</span>
+      export csv
+    </md-outlined-button>
+  </a>
+  <a href="{% url 'index' %}" style="text-decoration: none;">
+    <md-filled-button>
+      <span slot="icon" class="material-symbols-outlined">add</span>
+      add entry
+    </md-filled-button>
+  </a>
 </div>
 
-{# Add card container for better structure #}
-<div class="card shadow-sm">
-  <div class="card-body">
-    {# Change this check to use page_obj #}
+<div class="card">
+  <div class="table-wrapper">
     {% if page_obj.object_list %}
-    <table class="table table-striped">
+    <table class="table">
       <thead>
         <tr>
           <th scope="col">timestamp</th>
-          <th scope="col">weight</th>
-          <th scope="col">actions</th>
+          <th scope="col">weight (kg)</th>
+          <th scope="col" style="text-align: right;">actions</th>
         </tr>
       </thead>
       <tbody id="entries-table-body">
-         {# Iterate over the objects on the current page #}
-            {% for entry in page_obj.object_list %}
+        {% for entry in page_obj.object_list %}
         <tr data-timestamp="{{ entry.timestamp|date:'c' }}">
           <td class="timestamp"></td>
           <td>{{ entry.weight }}</td>
           <td>
-            <a
-              href="{% url 'edit_entry' entry.id %}"
-              class="btn btn-warning btn-sm"
-              aria-label="edit entry of {{ entry.weight }} kg"
-              >edit</a
-            >
-            <a
-              href="{% url 'delete_entry' entry.id %}"
-              class="btn btn-danger btn-sm"
-              onclick="
-                return confirm('are you sure you want to delete this entry?');
-              "
-              aria-label="delete entry of {{ entry.weight }} kg"
-              >delete</a
-            >
+            <div class="table-actions" style="justify-content: flex-end;">
+              <a href="{% url 'edit_entry' entry.id %}" style="text-decoration: none;">
+                <md-text-button aria-label="edit entry of {{ entry.weight }} kg">
+                  <span slot="icon" class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+                  edit
+                </md-text-button>
+              </a>
+              <a
+                href="{% url 'delete_entry' entry.id %}"
+                style="text-decoration: none;"
+                onclick="return confirm('are you sure you want to delete this entry?');"
+              >
+                <md-text-button
+                  aria-label="delete entry of {{ entry.weight }} kg"
+                  style="--md-text-button-label-text-color: var(--md-sys-color-error); --md-text-button-hover-label-text-color: var(--md-sys-color-error);"
+                >
+                  <span slot="icon" class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                  delete
+                </md-text-button>
+              </a>
+            </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-
-    {# --- Pagination Controls --- #}
-    <nav aria-label="page navigation">
-      <ul class="pagination justify-content-center">
-        {# Previous button #} {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a
-            class="page-link"
-            href="?page={{ page_obj.previous_page_number }}"
-            aria-label="previous"
-          >
-            <span aria-hidden="true">&laquo;</span>
-          </a>
-        </li>
-        {% else %}
-        <li class="page-item disabled">
-          <span class="page-link" aria-hidden="true">&laquo;</span>
-        </li>
-        {% endif %}
-
-                {# Page numbers #}
-                {% for i in page_obj.paginator.page_range %}
-                {% if page_obj.number == i %}
-        <li class="page-item active" aria-current="page">
-          <span class="page-link">{{ i }}</span>
-        </li>
-        {% else %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-        </li>
-        {% endif %}
-        {% endfor %}
-
-        {# Next button #}
-        {% if page_obj.has_next %}
-        <li class="page-item">
-          <a
-            class="page-link"
-            href="?page={{ page_obj.next_page_number }}"
-            aria-label="next"
-          >
-            <span aria-hidden="true">&raquo;</span>
-          </a>
-        </li>
-        {% else %}
-        <li class="page-item disabled">
-          <span class="page-link" aria-hidden="true">&raquo;</span>
-        </li>
-        {% endif %}
-      </ul>
-    </nav>
-    {# --- End Pagination Controls --- #} {% else %}
-    <p class="text-center text-muted">no entries found.</p>
+    {% else %}
+    <p class="text-center text-muted" style="padding: 24px;">no entries found.</p>
     {% endif %}
   </div>
+
+  {# --- Pagination Controls --- #}
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" style="text-decoration: none;">
+      <md-icon-button aria-label="previous page">
+        <span class="material-symbols-outlined">navigate_before</span>
+      </md-icon-button>
+    </a>
+    {% else %}
+    <md-icon-button disabled aria-label="previous page">
+      <span class="material-symbols-outlined">navigate_before</span>
+    </md-icon-button>
+    {% endif %}
+
+    {% for i in page_obj.paginator.page_range %}
+      {% if page_obj.number == i %}
+      <md-filled-button disabled style="--md-filled-button-container-color: var(--md-sys-color-primary); --md-filled-button-label-text-color: var(--md-sys-color-on-primary);">
+        {{ i }}
+      </md-filled-button>
+      {% else %}
+      <a href="?page={{ i }}" style="text-decoration: none;">
+        <md-text-button>{{ i }}</md-text-button>
+      </a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" style="text-decoration: none;">
+      <md-icon-button aria-label="next page">
+        <span class="material-symbols-outlined">navigate_next</span>
+      </md-icon-button>
+    </a>
+    {% else %}
+    <md-icon-button disabled aria-label="next page">
+      <span class="material-symbols-outlined">navigate_next</span>
+    </md-icon-button>
+    {% endif %}
+  </div>
+  {% endif %}
+  {# --- End Pagination Controls --- #}
 </div>
 
 <script>
@@ -114,7 +117,6 @@
     const rows = document.querySelectorAll("#entries-table-body tr");
     rows.forEach((row) => {
       const timestampUTC = new Date(row.getAttribute("data-timestamp"));
-      // Use browser's local time format
       row.querySelector(".timestamp").textContent =
         timestampUTC.toLocaleString();
     });

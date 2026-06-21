@@ -1,37 +1,59 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
 {% block title %}edit entry | wait{% endblock %}
 
 {% block content %}
 
-<h1 class="mb-4 text-center">edit entry</h1>
-<div class="card shadow-sm mb-4">
-    <div class="card-header">edit entry</div>
-    <div class="card-body">
-        <form method="post" id="weight-edit-form">
-            {% csrf_token %}
-            <div class="mb-3">
-                {{ form.weight|as_crispy_field }}
-            </div>
-            <div class="mb-3">
-                <label for="id_timestamp" class="form-label">timestamp</label>
-                <input
-                        type="datetime-local"
-                        id="id_timestamp"
-                        name="timestamp"
-                        class="form-control"
-                        required
-                        max="{{ todaymax|date:'Y-m-d\\TH:i:s' }}"
-                        step="1"
-                />
-            </div>
-            <div class="d-flex justify-content-end gap-2 mt-3">
-                <a href="{% url 'all_entries' %}" class="btn btn-secondary">cancel</a>
-                <button type="submit" class="btn btn-primary">save changes</button>
-            </div>
-        </form>
-    </div>
+<h1>edit entry</h1>
+
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <h2 class="card-title">edit entry</h2>
+    <form method="post" id="weight-edit-form" novalidate>
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+          <div style="color: var(--md-sys-color-error); margin-bottom: 12px; font-size: 14px;">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="form-field">
+            <md-outlined-text-field
+                label="weight"
+                type="number"
+                step="any"
+                name="weight"
+                id="id_weight"
+                value="{{ form.weight.value|default:'' }}"
+                required
+                {% if form.weight.errors %}error error-text="{{ form.weight.errors.0 }}"{% endif %}
+            >
+            </md-outlined-text-field>
+        </div>
+
+        <div class="form-field">
+            <md-outlined-text-field
+                label="timestamp"
+                type="datetime-local"
+                id="id_timestamp"
+                name="timestamp"
+                required
+                max="{{ todaymax|date:'Y-m-d\\TH:i:s' }}"
+                step="1"
+                {% if form.timestamp.errors %}error error-text="{{ form.timestamp.errors.0 }}"{% endif %}
+            >
+            </md-outlined-text-field>
+        </div>
+
+        <div class="actions-row" style="margin-top: 16px;">
+            <a href="{% url 'all_entries' %}" style="text-decoration: none;">
+                <md-text-button type="button">cancel</md-text-button>
+            </a>
+            <md-filled-button type="submit">save changes</md-filled-button>
+        </div>
+    </form>
 </div>
 
 {% endblock %}

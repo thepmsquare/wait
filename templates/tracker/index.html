@@ -1,42 +1,63 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 {% block title %}
 wait
 {% endblock %}
 {% block content %}
 
-<h1 class="mb-4 text-center">wait</h1>
+<h1>wait</h1>
 
 {# weight entry form card #}
-<div class="card shadow-sm mb-4">
-  <div class="card-header">new entry</div>
-  <div class="card-body">
-    <form method="post" id="weight-entry-form">
-      {% csrf_token %}
-      <div class="mb-3">{{ form.weight|as_crispy_field }}</div>
-      <div class="mb-3">
-        <label for="id_timestamp" class="form-label">timestamp</label>
-        <input
-          type="datetime-local"
-          id="id_timestamp"
-          name="timestamp"
-          class="form-control"
-          required
-          max="{{ todaymax|date:'Y-m-d\\TH:i:s' }}"
-          step="1"
-        />
+<div class="card">
+  <h2 class="card-title">new entry</h2>
+  <form method="post" id="weight-entry-form" novalidate>
+    {% csrf_token %}
+    
+    {% if form.non_field_errors %}
+      <div style="color: var(--md-sys-color-error); margin-bottom: 12px; font-size: 14px;">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
       </div>
-      <div class="d-grid gap-2 mt-3">
-        <button type="submit" class="btn btn-primary">save entry</button>
-      </div>
-    </form>
-  </div>
+    {% endif %}
+
+    <div class="form-field">
+      <md-outlined-text-field
+        label="weight"
+        type="number"
+        step="any"
+        name="weight"
+        id="id_weight"
+        value="{{ form.weight.value|default:'' }}"
+        required
+        {% if form.weight.errors %}error error-text="{{ form.weight.errors.0 }}"{% endif %}
+      >
+      </md-outlined-text-field>
+    </div>
+
+    <div class="form-field">
+      <md-outlined-text-field
+        label="timestamp"
+        type="datetime-local"
+        id="id_timestamp"
+        name="timestamp"
+        required
+        max="{{ todaymax|date:'Y-m-d\\TH:i:s' }}"
+        step="1"
+        {% if form.timestamp.errors %}error error-text="{{ form.timestamp.errors.0 }}"{% endif %}
+      >
+      </md-outlined-text-field>
+    </div>
+
+    <div class="mt-3">
+      <md-filled-button type="submit" style="width: 100%;">save entry</md-filled-button>
+    </div>
+  </form>
 </div>
 
 {# last 10 entries card #}
-<div class="card shadow-sm">
-  <div class="card-header">last 10 entries</div>
-  <div class="card-body d-flex justify-content-center">
+<div class="card">
+  <h2 class="card-title">last 10 entries</h2>
+  <div style="display: flex; justify-content: center; width: 100%;">
     {{ latest_entries|json_script:"entries-data" }}
     <div
       style="position: relative; width: 100%; max-width: 600px; height: 300px"
@@ -46,8 +67,10 @@ wait
       </canvas>
     </div>
   </div>
-  <div class="card-footer text-center">
-    <a href="{% url 'all_entries' %}" class="btn btn-sm">show all entries</a>
+  <div class="mt-4">
+    <a href="{% url 'all_entries' %}" style="text-decoration: none; display: block;">
+      <md-outlined-button style="width: 100%;">show all entries</md-outlined-button>
+    </a>
   </div>
 </div>
 
@@ -57,6 +80,12 @@ wait
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    // Get style custom properties for Chart theme coordination
+    const style = getComputedStyle(document.documentElement);
+    const primaryColor = style.getPropertyValue('--md-sys-color-primary').trim() || '#006a60';
+    const outlineColor = style.getPropertyValue('--md-sys-color-outline-variant').trim() || '#bec9c6';
+    const textColor = style.getPropertyValue('--md-sys-color-on-background').trim() || '#191c1b';
+
     // prefill timestamp
     const tsInput = document.getElementById("id_timestamp");
     if (tsInput) {
@@ -90,13 +119,11 @@ wait
     const entries = JSON.parse(
       document.getElementById("entries-data").textContent,
     ).reverse();
-    const labels = entries.map((e) => new Date(e.timestamp).toLocaleString());
-    const data = entries.map((e) => e.weight);
-    const ctx = document.getElementById("weightChart").getContext("2d");
     const dataPoints = entries.map((e) => ({
       x: e.timestamp,
       y: e.weight,
     }));
+    const ctx = document.getElementById("weightChart").getContext("2d");
     new Chart(ctx, {
       type: "line",
       data: {
@@ -105,6 +132,11 @@ wait
             label: "weight",
             data: dataPoints,
             fill: false,
+            borderColor: primaryColor,
+            backgroundColor: primaryColor,
+            tension: 0.15,
+            pointBackgroundColor: primaryColor,
+            pointBorderColor: primaryColor,
           },
         ],
       },
@@ -120,12 +152,32 @@ wait
             time: {
               unit: "day",
             },
+            grid: {
+              color: outlineColor,
+            },
+            ticks: {
+              color: textColor,
+            },
             title: {
               display: true,
               text: "time",
+              color: textColor,
             },
           },
-          y: { display: true, title: { display: true, text: "weight" } },
+          y: {
+            display: true,
+            grid: {
+              color: outlineColor,
+            },
+            ticks: {
+              color: textColor,
+            },
+            title: {
+              display: true,
+              text: "weight (kg)",
+              color: textColor,
+            }
+          },
         },
       },
     });

@@ -8,20 +8,19 @@
     <link rel="manifest" href="{% static 'manifest.json' %}" />
     <title>{% block title %}my django app{% endblock %}</title>
 
-    <!-- bootstrap -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
-      crossorigin="anonymous"
-    />
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- inter font -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Google Fonts: Material Symbols Outlined -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+    <!-- custom styling -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+
+    <!-- Material Web scripts -->
+    <script type="module" src="https://esm.run/@material/web/all.js"></script>
 
     <!-- pwa meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -29,60 +28,45 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="theme-color" content="#5c67f2" />
+    <meta name="theme-color" content="#006a60" />
     {% block extra_css %}{% endblock %}
   </head>
   <body>
     <a href="#main-content" class="skip-link">skip to main content</a>
     <header>
-      <nav
-        class="navbar navbar-expand-lg navbar-dark bg-dark"
-        aria-label="main navigation"
-      >
-        <div class="container-fluid">
-          <a class="navbar-brand" href="/">wait</a>
-          <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarNav"
-            aria-controls="navbarNav"
-            aria-expanded="false"
-            aria-label="toggle navigation"
-          >
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto align-items-center">
-              {% if user.is_authenticated %}
-              <li class="nav-item">
-                <span class="navbar-text me-3">
-                  welcome, {{ user.username }}!
-                </span>
-              </li>
-              <li class="nav-item">
-                <form
-                  method="post"
-                  action="{% url 'logout' %}"
-                  class="d-inline"
-                >
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-link btn-sm">
-                    logout
-                  </button>
-                </form>
-              </li>
-              {% else %}
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'login' %}">login</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'signup' %}">sign up</a>
-              </li>
-              {% endif %}
-            </ul>
-          </div>
-        </div>
+      <nav class="navbar" aria-label="main navigation">
+        <a class="navbar-brand" href="/">
+          <span class="material-symbols-outlined" style="font-size: 28px; vertical-align: middle;">monitoring</span>
+          <span>wait</span>
+        </a>
+        <ul class="navbar-menu">
+          {% if user.is_authenticated %}
+          <li class="navbar-item">
+            <span class="navbar-text" style="margin-right: 12px;">
+              welcome, {{ user.username }}!
+            </span>
+          </li>
+          <li class="navbar-item">
+            <form
+              method="post"
+              action="{% url 'logout' %}"
+              style="margin: 0; display: inline-flex;"
+            >
+              {% csrf_token %}
+              <md-text-button type="submit">
+                logout
+              </md-text-button>
+            </form>
+          </li>
+          {% else %}
+          <li class="navbar-item" style="margin-right: 8px;">
+            <a href="{% url 'login' %}" style="text-decoration: none;"><md-text-button>login</md-text-button></a>
+          </li>
+          <li class="navbar-item">
+            <a href="{% url 'signup' %}" style="text-decoration: none;"><md-filled-button>sign up</md-filled-button></a>
+          </li>
+          {% endif %}
+        </ul>
       </nav>
     </header>
 
@@ -90,17 +74,12 @@
       {% block content %} {% endblock %}
     </main>
 
-    <footer class="footer mt-auto py-3 bg-light text-center border-top">
-      <div class="container">
-        <span class="text-muted small">wait by thepmsquare</span>
+    <footer>
+      <div class="footer-content">
+        <span>wait by thepmsquare</span>
       </div>
     </footer>
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-      crossorigin="anonymous"
-    ></script>
     {% block extra_js %}{% endblock %}
     <script>
       if ("serviceWorker" in navigator) {

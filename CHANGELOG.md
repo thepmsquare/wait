@@ -1,6 +1,11 @@
 # changelog
 
-## v1.6.0
+## v1.7.0
+
+- bug fix in dockerfile.
+- remove bootstrap and use material 3 web components.
+
+## v1.6.0 (unstable)
 
 - add oauth config to **env**.
 - bug fix in dockerfile.

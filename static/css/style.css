@@ -1,71 +1,383 @@
-body {
-  font-family: "Inter", sans-serif;
-  background-color: #f8f9fa;
-  color: #212529;
+:root {
+  /* Material 3 Color Palette (Teal Theme) */
+  --md-sys-color-primary: #006a60;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #74f8e5;
+  --md-sys-color-on-primary-container: #00201c;
+  --md-sys-color-secondary: #4a635f;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #cce8e2;
+  --md-sys-color-on-secondary-container: #05201c;
+  --md-sys-color-tertiary: #4b607a;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #d3e4ff;
+  --md-sys-color-on-tertiary-container: #041c33;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+  --md-sys-color-background: #fafdfb;
+  --md-sys-color-on-background: #191c1b;
+  --md-sys-color-surface: #f7faf8;
+  --md-sys-color-on-surface: #191c1b;
+  --md-sys-color-surface-variant: #dae5e1;
+  --md-sys-color-on-surface-variant: #3f4947;
+  --md-sys-color-outline: #6f7977;
+  --md-sys-color-outline-variant: #bec9c6;
+  --md-sys-color-inverse-surface: #2d3130;
+  --md-sys-color-inverse-on-surface: #eff1ef;
+  --md-sys-color-inverse-primary: #53dbc9;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-surface-tint: #006a60;
+  --md-sys-color-outline-variant: #bec9c6;
+
+  /* Typography & Spacing */
+  --font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  --md-ref-typeface-brand: 'Outfit', 'Inter', system-ui, sans-serif;
+  --md-ref-typeface-plain: 'Outfit', 'Inter', system-ui, sans-serif;
+  --border-radius-small: 8px;
+  --border-radius-medium: 12px;
+  --border-radius-large: 16px;
+  --border-radius-extra-large: 28px;
+  --transition-speed: 0.2s;
 }
 
-.navbar-brand {
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.navbar-dark .nav-link {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.navbar-dark .nav-link:hover {
-  color: #fff;
-  text-decoration: underline;
-}
-
-.btn-link {
-  color: #fff;
-  text-decoration: none;
-}
-
-.btn-link:hover {
-  color: #0ff;
-  text-decoration: underline;
-}
-
-.container {
-  padding-top: 3rem;
-  padding-bottom: 3rem;
-}
-
-.navbar {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-/* pwa specific */
-@media (display-mode: standalone) {
-  .navbar {
-    padding-top: env(safe-area-inset-top);
+/* System-level Dark Mode Preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --md-sys-color-primary: #53dbc9;
+    --md-sys-color-on-primary: #003731;
+    --md-sys-color-primary-container: #005048;
+    --md-sys-color-on-primary-container: #74f8e5;
+    --md-sys-color-secondary: #b1ccc6;
+    --md-sys-color-on-secondary: #1c3531;
+    --md-sys-color-secondary-container: #334b47;
+    --md-sys-color-on-secondary-container: #cce8e2;
+    --md-sys-color-tertiary: #b2c8e8;
+    --md-sys-color-on-tertiary: #1b3149;
+    --md-sys-color-tertiary-container: #334861;
+    --md-sys-color-on-tertiary-container: #d3e4ff;
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+    --md-sys-color-background: #191c1b;
+    --md-sys-color-on-background: #e0e3e1;
+    --md-sys-color-surface: #111413;
+    --md-sys-color-on-surface: #e0e3e1;
+    --md-sys-color-surface-variant: #3f4947;
+    --md-sys-color-on-surface-variant: #bec9c6;
+    --md-sys-color-outline: #899391;
+    --md-sys-color-outline-variant: #3f4947;
+    --md-sys-color-inverse-surface: #e0e3e1;
+    --md-sys-color-inverse-on-surface: #2d3130;
+    --md-sys-color-inverse-primary: #006a60;
   }
 }
 
-/* accessibility skip link */
+/* Reset & Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  transition: color var(--transition-speed) ease;
+}
+a:hover {
+  color: var(--md-sys-color-tertiary);
+  text-decoration: underline;
+}
+
+/* Container & Layout */
+.container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  flex-grow: 1;
+}
+
+/* Header & Navigation */
+header {
+  background-color: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px;
+}
+
+.navbar-brand {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  list-style: none;
+}
+
+.navbar-item {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-text {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Footer */
+footer {
+  background-color: var(--md-sys-color-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.footer-content {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Skip Link */
 .skip-link {
   position: absolute;
-  top: -40px;
-  left: 0;
-  background: #000;
-  color: #fff;
-  padding: 8px;
-  z-index: 100;
-  transition: top 0.2s ease;
+  top: -100px;
+  left: 16px;
+  background-color: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  padding: 8px 16px;
+  border-radius: var(--border-radius-small);
+  z-index: 999;
+  transition: top var(--transition-speed) ease;
+}
+.skip-link:focus {
+  top: 16px;
+}
+
+/* Cards & Containers */
+.card {
+  background-color: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--border-radius-large);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Page Titles */
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.75px;
+  margin-bottom: 24px;
+  text-align: center;
+  color: var(--md-sys-color-on-background);
+}
+
+/* Form Styles */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+md-outlined-text-field {
+  width: 100%;
+  --md-outlined-text-field-container-shape: var(--border-radius-small);
+}
+
+/* Custom grid for page structure */
+.grid-centered {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 200px);
+}
+
+.auth-card-wrapper {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Table Style */
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--border-radius-medium);
+  background-color: var(--md-sys-color-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 15px;
+}
+
+.table th {
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+/* Buttons and Actions Row */
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.pagination-item {
+  display: inline-flex;
+}
+
+/* Social Buttons */
+.social-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--border-radius-small);
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color var(--transition-speed) ease;
+}
+
+.social-login-btn:hover {
+  background-color: var(--md-sys-color-surface-variant);
   text-decoration: none;
 }
 
-.skip-link:focus {
-  top: 0;
+.social-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--md-sys-color-outline);
+  margin: 16px 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
-/* ensure focus outline is visible and clear for keyboard users */
-a:focus,
-button:focus,
-input:focus,
-select:focus,
-textarea:focus {
-  outline: 2px solid #5c67f2 !important;
+.social-divider::before,
+.social-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.social-divider:not(:empty)::before {
+  margin-right: .5em;
+}
+
+.social-divider:not(:empty)::after {
+  margin-left: .5em;
+}
+
+/* Helpers & Utils */
+.text-center {
+  text-align: center;
+}
+.text-muted {
+  color: var(--md-sys-color-on-surface-variant);
+}
+.small {
+  font-size: 12px;
+}
+.mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+
+/* Custom field focus support */
+md-outlined-text-field:focus-within {
+  outline: none !important;
+}
+
+/* Ensure focus ring is accessible for standard keyboard navigations */
+*:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary) !important;
   outline-offset: 2px;
 }
