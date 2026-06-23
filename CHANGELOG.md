@@ -1,5 +1,9 @@
 # changelog
 
+## v1.9.0
+
+- add django rest framework and swagger ui for apis.
+
 ## v1.8.0
 
 - update graph to show different durations on homepage.

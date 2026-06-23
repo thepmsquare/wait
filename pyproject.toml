@@ -1,6 +1,6 @@
 [project]
 name = "wait"
-version = "1.8.0"
+version = "1.9.0"
 description = " weight tracking app "
 readme = "README.md"
 requires-python = ">=3.12"
@@ -22,6 +22,9 @@ dependencies = [
     "cryptography==44.0.3",
     "gunicorn",
     "whitenoise",
+    "djangorestframework>=3.17.1",
+    "django-cors-headers>=4.9.0",
+    "drf-spectacular>=0.29.0",
 ]
 
 [tool.uv]

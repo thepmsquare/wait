@@ -29,6 +29,7 @@ urlpatterns = [
         name="login",
     ),
     path("", include("tracker.urls")),
+    path("api/", include("tracker.api_urls")),
     path("accounts/", include("django.contrib.auth.urls")),
     path("accounts/", include("allauth.urls")),
 ]

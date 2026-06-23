@@ -52,9 +52,14 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "corsheaders",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -188,3 +193,27 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 ACCOUNT_LOGIN_ON_SIGNUP = True
+
+# Django Rest Framework
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# CORS headers
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+# Swagger Spectacular Settings
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Weight Tracker API",
+    "DESCRIPTION": "API for weight tracking applications",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
