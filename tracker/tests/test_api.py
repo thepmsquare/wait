@@ -55,6 +55,7 @@ def test_api_crud_operations(api_client, django_user_model):
     response = api_client.post(url, data)
     assert response.status_code == status.HTTP_201_CREATED
     assert response.data["weight"] == "78.50"
+    assert response.data["unit"] == "kg"  # default unit
     assert response.data["user"] == "apiuser"
 
     entry_id = response.data["id"]
@@ -64,18 +65,21 @@ def test_api_crud_operations(api_client, django_user_model):
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data) == 1
     assert response.data[0]["id"] == entry_id
+    assert response.data[0]["unit"] == "kg"
 
     # 3. Retrieve weight entry
     detail_url = reverse("weightentry-detail", kwargs={"pk": entry_id})
     response = api_client.get(detail_url)
     assert response.status_code == status.HTTP_200_OK
     assert response.data["weight"] == "78.50"
+    assert response.data["unit"] == "kg"
 
-    # 4. Update weight entry
-    update_data = {"weight": "79.00"}
+    # 4. Update weight entry (change weight and unit)
+    update_data = {"weight": "172.00", "unit": "lb"}
     response = api_client.put(detail_url, update_data)
     assert response.status_code == status.HTTP_200_OK
-    assert response.data["weight"] == "79.00"
+    assert response.data["weight"] == "172.00"
+    assert response.data["unit"] == "lb"
 
     # 5. Delete weight entry
     response = api_client.delete(detail_url)

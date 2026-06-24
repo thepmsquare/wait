@@ -1,5 +1,9 @@
 # changelog
 
+## v1.11.0 (in progress)
+
+- add unit in WeightEntry model.
+
 ## v1.10.0
 
 - change graph to default to 7d and persist filters after refresh.

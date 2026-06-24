@@ -38,7 +38,7 @@ class WeightEntryForm(LowercaseFormMixin, forms.ModelForm):
         """
 
         model = WeightEntry
-        fields = ["weight", "timestamp"]
+        fields = ["weight", "unit", "timestamp"]
         widgets = {
             "timestamp": forms.DateTimeInput(attrs={"type": "datetime-local"}),
         }

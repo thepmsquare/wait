@@ -39,7 +39,11 @@ def index(request: HttpRequest) -> HttpResponse:
         form = WeightEntryForm()
     all_entries = WeightEntry.objects.filter(user=request.user)
     all_entries_serialized = [
-        {"weight": float(entry.weight), "timestamp": localtime(entry.timestamp).isoformat()}
+        {
+            "weight": float(entry.weight),
+            "unit": entry.unit,
+            "timestamp": localtime(entry.timestamp).isoformat(),
+        }
         for entry in all_entries
     ]
     context = {
@@ -129,11 +133,11 @@ def export_entries_csv(request: HttpRequest) -> HttpResponse:
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
-    writer.writerow(["timestamp", "weight"])  # CSV header
+    writer.writerow(["timestamp", "weight", "unit"])  # CSV header
 
     # Fetch all entries and write them to the CSV
     entries = WeightEntry.objects.filter(user=request.user).order_by("timestamp")
     for entry in entries:
-        writer.writerow([entry.timestamp, entry.weight])
+        writer.writerow([entry.timestamp, entry.weight, entry.unit])
 
     return response

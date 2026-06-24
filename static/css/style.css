@@ -271,6 +271,11 @@ md-outlined-text-field {
   --md-outlined-text-field-container-shape: var(--border-radius-small);
 }
 
+md-outlined-select {
+  width: 100%;
+  --md-outlined-select-container-shape: var(--border-radius-small);
+}
+
 /* Custom grid for page structure */
 .grid-centered {
   display: grid;

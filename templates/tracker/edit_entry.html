@@ -34,6 +34,23 @@
         </div>
 
         <div class="form-field">
+            <md-outlined-select
+                label="unit"
+                name="unit"
+                id="id_unit"
+                required
+                {% if form.unit.errors %}error error-text="{{ form.unit.errors.0 }}"{% endif %}
+            >
+                <md-select-option value="kg" {% if form.unit.value == 'kg' or not form.unit.value %}selected{% endif %}>
+                    <div slot="headline">kg</div>
+                </md-select-option>
+                <md-select-option value="lb" {% if form.unit.value == 'lb' %}selected{% endif %}>
+                    <div slot="headline">lb</div>
+                </md-select-option>
+            </md-outlined-select>
+        </div>
+
+        <div class="form-field">
             <md-outlined-text-field
                 label="timestamp"
                 type="datetime-local"

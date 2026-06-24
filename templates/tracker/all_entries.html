@@ -28,7 +28,7 @@
       <thead>
         <tr>
           <th scope="col">timestamp</th>
-          <th scope="col">weight (kg)</th>
+          <th scope="col">weight</th>
           <th scope="col" style="text-align: right;">actions</th>
         </tr>
       </thead>
@@ -36,11 +36,11 @@
         {% for entry in page_obj.object_list %}
         <tr data-timestamp="{{ entry.timestamp|date:'c' }}">
           <td class="timestamp"></td>
-          <td>{{ entry.weight }}</td>
+          <td>{{ entry.weight }} {{ entry.unit }}</td>
           <td>
             <div class="table-actions" style="justify-content: flex-end;">
               <a href="{% url 'edit_entry' entry.id %}" style="text-decoration: none;">
-                <md-text-button aria-label="edit entry of {{ entry.weight }} kg">
+                <md-text-button aria-label="edit entry of {{ entry.weight }} {{ entry.unit }}">
                   <span slot="icon" class="material-symbols-outlined" style="font-size: 18px;">edit</span>
                   edit
                 </md-text-button>
@@ -51,7 +51,7 @@
                 onclick="return confirm('are you sure you want to delete this entry?');"
               >
                 <md-text-button
-                  aria-label="delete entry of {{ entry.weight }} kg"
+                  aria-label="delete entry of {{ entry.weight }} {{ entry.unit }}"
                   style="--md-text-button-label-text-color: var(--md-sys-color-error); --md-text-button-hover-label-text-color: var(--md-sys-color-error);"
                 >
                   <span slot="icon" class="material-symbols-outlined" style="font-size: 18px;">delete</span>

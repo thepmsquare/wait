@@ -12,5 +12,5 @@ class WeightEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WeightEntry
-        fields = ["id", "user", "weight", "timestamp"]
+        fields = ["id", "user", "weight", "unit", "timestamp"]
         read_only_fields = ["id", "user"]

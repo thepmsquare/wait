@@ -19,10 +19,20 @@ class WeightEntry(models.Model):
         on_delete=models.CASCADE,
         related_name="weight_entries",
     )
+    class UnitChoices(models.TextChoices):
+        KG = "kg", "kg"
+        LB = "lb", "lb"
+
     weight = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        help_text="enter your weight in kilograms",
+        help_text="enter your weight",
+    )
+    unit = models.CharField(
+        max_length=2,
+        choices=UnitChoices.choices,
+        default=UnitChoices.KG,
+        help_text="unit of the weight measurement (kg or lb)",
     )
 
     timestamp = models.DateTimeField(
@@ -42,4 +52,4 @@ class WeightEntry(models.Model):
         """
         String representation of the WeightEntry object.
         """
-        return f"{self.weight} on {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+        return f"{self.weight} {self.unit} on {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
