@@ -60,12 +60,12 @@ wait
   
   <div class="chart-filter-container">
     <div class="segmented-control" role="group" aria-label="filter weight history by time range">
-      <button class="segmented-control-btn" data-range="7d">7d</button>
+      <button class="segmented-control-btn active" data-range="7d">7d</button>
       <button class="segmented-control-btn" data-range="1m">1m</button>
       <button class="segmented-control-btn" data-range="3m">3m</button>
       <button class="segmented-control-btn" data-range="6m">6m</button>
       <button class="segmented-control-btn" data-range="1y">1y</button>
-      <button class="segmented-control-btn active" data-range="all">all</button>
+      <button class="segmented-control-btn" data-range="all">all</button>
     </div>
   </div>
 
@@ -98,6 +98,9 @@ wait
     const primaryColor = style.getPropertyValue('--md-sys-color-primary').trim() || '#006a60';
     const outlineColor = style.getPropertyValue('--md-sys-color-outline-variant').trim() || '#bec9c6';
     const textColor = style.getPropertyValue('--md-sys-color-on-background').trim() || '#191c1b';
+    const trendColor = '#f59e0b';
+    const targetColor = '#64748b';
+    const assignedTargetWeight = 75;
 
     // prefill timestamp
     const tsInput = document.getElementById("id_timestamp");
@@ -151,13 +154,33 @@ wait
             pointBackgroundColor: primaryColor,
             pointBorderColor: primaryColor,
           },
+          {
+            label: "avg weight",
+            data: [],
+            fill: false,
+            borderColor: trendColor,
+            backgroundColor: trendColor,
+            tension: 0.2,
+            pointRadius: 0,
+            borderDash: [6, 4],
+          },
+          {
+            label: "assigned target",
+            data: [],
+            fill: false,
+            borderColor: targetColor,
+            backgroundColor: targetColor,
+            tension: 0,
+            pointRadius: 0,
+            borderDash: [2, 4],
+          },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { display: true, position: 'bottom' },
         },
         scales: {
           x: {
@@ -197,6 +220,14 @@ wait
 
     const statusEl = document.getElementById("chart-status");
 
+    function getAverageWeight(points) {
+      if (!points.length) {
+        return null;
+      }
+      const total = points.reduce((sum, point) => sum + point.y, 0);
+      return total / points.length;
+    }
+
     function updateChart(range) {
       const now = new Date();
       let cutoff = null;
@@ -230,8 +261,17 @@ wait
       const filteredData = cutoff 
         ? dataPoints.filter(dp => new Date(dp.x) >= cutoff)
         : dataPoints;
+      const averageWeight = getAverageWeight(filteredData);
 
       weightChart.data.datasets[0].data = filteredData;
+      weightChart.data.datasets[1].data = filteredData.map((dp) => ({
+        x: dp.x,
+        y: averageWeight,
+      }));
+      weightChart.data.datasets[2].data = filteredData.map((dp) => ({
+        x: dp.x,
+        y: assignedTargetWeight,
+      }));
       
       if (timeUnit) {
         weightChart.options.scales.x.time.unit = timeUnit;
@@ -242,7 +282,28 @@ wait
       weightChart.update();
 
       if (statusEl) {
-        statusEl.textContent = `showing ${filteredData.length} entry${filteredData.length === 1 ? '' : 's'}`;
+        const averageLabel = averageWeight !== null ? ` • avg ${averageWeight.toFixed(1)} kg` : '';
+        statusEl.textContent = `showing ${filteredData.length} entry${filteredData.length === 1 ? '' : 's'}${averageLabel}`;
+      }
+    }
+
+    const chartRangeStorageKey = "wait.chartRange";
+
+    function persistChartRange(range) {
+      try {
+        localStorage.setItem(chartRangeStorageKey, range);
+      } catch (error) {
+        console.warn("could not persist chart range", error);
+      }
+    }
+
+    function getStoredChartRange() {
+      try {
+        const storedRange = localStorage.getItem(chartRangeStorageKey);
+        return storedRange || "7d";
+      } catch (error) {
+        console.warn("could not read chart range", error);
+        return "7d";
       }
     }
 
@@ -252,12 +313,20 @@ wait
       btn.addEventListener("click", () => {
         filterButtons.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        updateChart(btn.getAttribute("data-range"));
+        const range = btn.getAttribute("data-range");
+        persistChartRange(range);
+        updateChart(range);
       });
     });
 
-    // Initialize with default range (all)
-    updateChart("all");
+    const savedRange = getStoredChartRange();
+    const initialButton = document.querySelector(`.segmented-control-btn[data-range="${savedRange}"]`);
+    if (initialButton) {
+      filterButtons.forEach(b => b.classList.remove("active"));
+      initialButton.classList.add("active");
+    }
+
+    updateChart(savedRange);
   });
 </script>
 {% endblock %}

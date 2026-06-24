@@ -1,5 +1,10 @@
 # changelog
 
+## v1.10.0
+
+- change graph to default to 7d and persist filters after refresh.
+- add avg trendline in graph.
+
 ## v1.9.0
 
 - add django rest framework and swagger ui for apis.
