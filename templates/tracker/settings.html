@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}settings | wait{% endblock %}
+
+{% block content %}
+
+<h1>settings</h1>
+
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <h2 class="card-title">preferences</h2>
+    <form method="post" id="settings-form" novalidate>
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+          <div style="color: var(--md-sys-color-error); margin-bottom: 12px; font-size: 14px;">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="form-field">
+            <md-outlined-text-field
+                label="target weight"
+                type="number"
+                step="any"
+                name="target_weight"
+                id="id_target_weight"
+                value="{{ form.target_weight.value|default:'' }}"
+                required
+                {% if form.target_weight.errors %}error error-text="{{ form.target_weight.errors.0 }}"{% endif %}
+            >
+            </md-outlined-text-field>
+        </div>
+
+        <div class="form-field">
+            <md-outlined-select
+                label="preferred display unit"
+                name="preferred_unit"
+                id="id_preferred_unit"
+                required
+                {% if form.preferred_unit.errors %}error error-text="{{ form.preferred_unit.errors.0 }}"{% endif %}
+            >
+                <md-select-option value="kg" {% if form.preferred_unit.value == 'kg' or not form.preferred_unit.value %}selected{% endif %}>
+                    <div slot="headline">kg</div>
+                </md-select-option>
+                <md-select-option value="lb" {% if form.preferred_unit.value == 'lb' %}selected{% endif %}>
+                    <div slot="headline">lb</div>
+                </md-select-option>
+            </md-outlined-select>
+        </div>
+
+        <div class="actions-row" style="margin-top: 16px;">
+            <a href="{% url 'index' %}" style="text-decoration: none;">
+                <md-text-button type="button">cancel</md-text-button>
+            </a>
+            <md-filled-button type="submit">save settings</md-filled-button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

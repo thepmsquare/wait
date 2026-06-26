@@ -53,3 +53,48 @@ class WeightEntry(models.Model):
         String representation of the WeightEntry object.
         """
         return f"{self.weight} {self.unit} on {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+
+
+class UserSettings(models.Model):
+    """
+    model to store user preferences like target weight and preferred display unit.
+    """
+
+    user = models.OneToOneField(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="settings",
+    )
+    target_weight = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=75.00,
+        help_text="enter your target weight in kg",
+    )
+    preferred_unit = models.CharField(
+        max_length=2,
+        choices=WeightEntry.UnitChoices.choices,
+        default=WeightEntry.UnitChoices.KG,
+        help_text="preferred display unit",
+    )
+
+    class Meta:
+        verbose_name = "user settings"
+        verbose_name_plural = "user settings"
+
+    def __str__(self):
+        return f"{self.user.username}'s settings"
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+@receiver(post_save, sender=get_user_model())
+def create_user_settings(sender, instance, created, **kwargs):
+    """
+    Automatically create a UserSettings record for new users.
+    """
+    if created:
+        UserSettings.objects.get_or_create(user=instance)
+

@@ -103,3 +103,48 @@ def test_export_entries_csv_contains_unit(client, django_user_model):
     assert len(lines) == 3
     assert "75.50,kg" in lines[1] or "75.50,kg" in lines[2]
     assert "165.00,lb" in lines[1] or "165.00,lb" in lines[2]
+
+
+@pytest.mark.django_db
+def test_user_settings_automatically_created(django_user_model):
+    """
+    test that a UserSettings object is automatically created when a User is created.
+    """
+    user = django_user_model.objects.create_user(username="newuser", password="password")
+    assert hasattr(user, "settings")
+    assert user.settings.target_weight == 75.00
+    assert user.settings.preferred_unit == "kg"
+
+
+@pytest.mark.django_db
+def test_settings_view_get_and_post(client, django_user_model):
+    """
+    test settings page loading (GET) and updating (POST).
+    """
+    user = django_user_model.objects.create_user(username="testuser", password="password")
+    client.login(username="testuser", password="password")
+
+    # 1. GET settings page
+    response = client.get(reverse("settings"))
+    assert response.status_code == 200
+    assert "form" in response.context
+
+    # 2. POST update to settings (preferred_unit='lb', target_weight=150)
+    # Since we post 150 lb, it should be converted to kg (150 * 0.45359237 = 68.04 kg) in the DB
+    response = client.post(
+        reverse("settings"),
+        {"target_weight": "150.00", "preferred_unit": "lb"}
+    )
+    assert response.status_code == 302  # redirects on success
+    
+    user.refresh_from_db()
+    assert user.settings.preferred_unit == "lb"
+    # 150 * 0.45359237 = 68.03885... -> rounded to 68.04
+    assert float(user.settings.target_weight) == 68.04
+
+    # 3. GET settings page again, the display weight should be converted back to 150.00
+    response = client.get(reverse("settings"))
+    assert response.status_code == 200
+    form = response.context["form"]
+    assert float(form.initial["target_weight"]) == 150.00
+

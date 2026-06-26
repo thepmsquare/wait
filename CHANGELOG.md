@@ -3,6 +3,7 @@
 ## v1.11.0 (in progress)
 
 - add unit in WeightEntry model.
+- add per-user target weights and preferred display unit.
 
 ## v1.10.0
 

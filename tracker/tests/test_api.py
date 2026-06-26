@@ -151,3 +151,40 @@ def test_swagger_endpoints_accessible(api_client):
     assert api_client.get(swagger_url).status_code == status.HTTP_200_OK
     assert api_client.get(redoc_url).status_code == status.HTTP_200_OK
 
+
+@pytest.mark.django_db
+def test_api_user_settings(api_client, django_user_model):
+    """
+    Test retrieving and updating UserSettings via API.
+    """
+    user = django_user_model.objects.create_user(username="apiuser", password="password")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+
+    url = reverse("api_user_settings")
+
+    # 1. Retrieve settings (defaults should be returned)
+    response = api_client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["preferred_unit"] == "kg"
+    assert response.data["target_weight"] == "75.00"
+
+    # 2. Update settings (preferred_unit to lb, target_weight to 150)
+    # The API view should take 150 lb, convert to kg and store 68.04 in the DB,
+    # but return 150.00 in the representation response.
+    response = api_client.put(url, {"target_weight": "150.00", "preferred_unit": "lb"})
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["preferred_unit"] == "lb"
+    assert response.data["target_weight"] == "150.00"
+
+    # 3. Verify in DB
+    user.refresh_from_db()
+    assert user.settings.preferred_unit == "lb"
+    assert float(user.settings.target_weight) == 68.04
+
+    # 4. Unauthenticated access should be rejected
+    api_client.credentials()  # Clear credentials
+    response = api_client.get(url)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+

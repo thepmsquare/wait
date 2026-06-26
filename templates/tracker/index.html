@@ -117,7 +117,9 @@ wait
     const textColor = style.getPropertyValue('--md-sys-color-on-background').trim() || '#191c1b';
     const trendColor = '#f59e0b';
     const targetColor = '#64748b';
-    const assignedTargetWeight = 75;
+    const preferredUnit = "{{ preferred_unit|default:'kg' }}";
+    const rawTargetWeightKg = {{ target_weight|default:75.0 }};
+    const assignedTargetWeight = preferredUnit === "lb" ? rawTargetWeightKg / 0.45359237 : rawTargetWeightKg;
 
     // prefill timestamp
     const tsInput = document.getElementById("id_timestamp");
@@ -154,8 +156,10 @@ wait
     ).reverse();
     const dataPoints = entries.map((e) => {
       let yVal = e.weight;
-      if (e.unit === "lb") {
+      if (preferredUnit === "kg" && e.unit === "lb") {
         yVal = e.weight * 0.45359237;
+      } else if (preferredUnit === "lb" && e.unit === "kg") {
+        yVal = e.weight / 0.45359237;
       }
       return {
         x: e.timestamp,
@@ -211,9 +215,11 @@ wait
               label: function(context) {
                 const dp = context.raw;
                 if (dp && dp.originalWeight !== undefined && dp.originalUnit !== undefined) {
-                  return `weight: ${dp.originalWeight} ${dp.originalUnit} (${context.parsed.y.toFixed(2)} kg)`;
+                  const otherUnit = preferredUnit === "kg" ? "lb" : "kg";
+                  const otherValue = preferredUnit === "kg" ? context.parsed.y / 0.45359237 : context.parsed.y * 0.45359237;
+                  return `weight: ${dp.originalWeight} ${dp.originalUnit} (${context.parsed.y.toFixed(2)} ${preferredUnit} / ${otherValue.toFixed(2)} ${otherUnit})`;
                 }
-                return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} kg`;
+                return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} ${preferredUnit}`;
               }
             }
           }
@@ -246,7 +252,7 @@ wait
             },
             title: {
               display: true,
-              text: "weight (kg)",
+              text: `weight (${preferredUnit})`,
               color: textColor,
             }
           },
@@ -318,7 +324,7 @@ wait
       weightChart.update();
 
       if (statusEl) {
-        const averageLabel = averageWeight !== null ? ` • avg ${averageWeight.toFixed(1)} kg` : '';
+        const averageLabel = averageWeight !== null ? ` • avg ${averageWeight.toFixed(1)} ${preferredUnit}` : '';
         statusEl.textContent = `showing ${filteredData.length} entry${filteredData.length === 1 ? '' : 's'}${averageLabel}`;
       }
     }

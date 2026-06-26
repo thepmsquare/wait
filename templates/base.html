@@ -46,6 +46,13 @@
               welcome, {{ user.username }}!
             </span>
           </li>
+          <li class="navbar-item" style="margin-right: 8px;">
+            <a href="{% url 'settings' %}" style="text-decoration: none;">
+              <md-text-button>
+                settings
+              </md-text-button>
+            </a>
+          </li>
           <li class="navbar-item">
             <form
               method="post"

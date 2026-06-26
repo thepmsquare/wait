@@ -13,9 +13,10 @@ from django.utils import timezone
 from django.utils.timezone import localtime
 from django.views.generic.edit import CreateView
 
-from tracker.forms import CustomUserCreationForm, WeightEntryForm
+from tracker.forms import CustomUserCreationForm, WeightEntryForm, UserSettingsForm
 
-from .models import WeightEntry  # Assuming WeightEntry is your model
+from .models import WeightEntry, UserSettings  # Assuming WeightEntry is your model
+
 
 
 @login_required
@@ -26,6 +27,7 @@ def index(request: HttpRequest) -> HttpResponse:
     and handles form submissions.
     Requires user to be logged in.
     """
+    settings, _ = UserSettings.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
         form = WeightEntryForm(request.POST)
@@ -36,7 +38,7 @@ def index(request: HttpRequest) -> HttpResponse:
 
             return redirect(reverse("index"))
     else:
-        form = WeightEntryForm()
+        form = WeightEntryForm(initial={"unit": settings.preferred_unit})
     all_entries = WeightEntry.objects.filter(user=request.user)
     all_entries_serialized = [
         {
@@ -50,9 +52,12 @@ def index(request: HttpRequest) -> HttpResponse:
         "form": form,
         "all_entries": all_entries_serialized,
         "todaymax": datetime.combine(timezone.now(), time.max),
+        "target_weight": float(settings.target_weight),
+        "preferred_unit": settings.preferred_unit,
     }
 
     return render(request, "tracker/index.html", context)
+
 
 
 @login_required
@@ -141,3 +146,20 @@ def export_entries_csv(request: HttpRequest) -> HttpResponse:
         writer.writerow([entry.timestamp, entry.weight, entry.unit])
 
     return response
+
+
+@login_required
+def settings_view(request: HttpRequest) -> HttpResponse:
+    """
+    view to load and update user preferences.
+    """
+    settings, _ = UserSettings.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        form = UserSettingsForm(request.POST, instance=settings)
+        if form.is_valid():
+            form.save()
+            return redirect("index")
+    else:
+        form = UserSettingsForm(instance=settings)
+    return render(request, "tracker/settings.html", {"form": form})
+
