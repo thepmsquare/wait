@@ -1,9 +1,10 @@
 # changelog
 
-## v1.11.0 (in progress)
+## v1.11.0
 
 - add unit in WeightEntry model.
 - add per-user target weights and preferred display unit.
+- bug fix: add migration to delete duplicate social apps.
 
 ## v1.10.0
 
