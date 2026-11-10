@@ -1,5 +1,28 @@
 # changelog
 
+## v1.12.0
+
+- security: `DEBUG` now defaults to `false`; production settings (secure
+  cookies, HSTS, security headers, CSP) are enabled automatically.
+- security: `SECRET_KEY` is read from the environment instead of being
+  hard-coded; the Docker entrypoint generates an ephemeral key when missing.
+- security: entry deletion is POST-only and protected by CSRF.
+- security: OpenAPI schema and documentation endpoints require login.
+- security: add input validation for non-positive weights and future
+  timestamps, plus a database index for per-user history queries.
+- auth: consolidate login/signup on django-allauth and remove the duplicate
+  Django auth views.
+- api: list endpoints are paginated and rate limited; schema generation is
+  clean and uses enum overrides.
+- pwa: serve the service worker from `/sw.js` with root scope and stop caching
+  authenticated pages.
+- ui: pin Chart.js with subresource integrity, add a running-average trendline,
+  improve accessible chart controls, and handle pagination edge cases.
+- docker: run as a non-root user, add a healthcheck, and make gunicorn workers,
+  timeout, and migrations configurable.
+- deps: remove unused crispy forms, update Django, requests, and lockfile;
+  add ruff to the development workflow.
+
 ## v1.11.0
 
 - add unit in WeightEntry model.

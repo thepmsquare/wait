@@ -1,21 +1,26 @@
 {
+  "id": "/",
   "name": "wait",
   "short_name": "wait",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#f0f2f5",
-  "theme_color": "#5c67f2",
+  "background_color": "#fafdfb",
+  "theme_color": "#006a60",
   "description": "weight tracking app for personal use.",
+  "lang": "en",
   "icons": [
     {
       "src": "/static/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/static/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

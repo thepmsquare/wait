@@ -1,7 +1,9 @@
 from decimal import Decimal
+
+from django.utils import timezone
 from rest_framework import serializers
 
-from .models import WeightEntry, UserSettings
+from .models import UserSettings, WeightEntry
 
 
 class WeightEntrySerializer(serializers.ModelSerializer):
@@ -15,6 +17,11 @@ class WeightEntrySerializer(serializers.ModelSerializer):
         model = WeightEntry
         fields = ["id", "user", "weight", "unit", "timestamp"]
         read_only_fields = ["id", "user"]
+
+    def validate_timestamp(self, value):
+        if value > timezone.now():
+            raise serializers.ValidationError("timestamp cannot be in the future.")
+        return value
 
 
 class UserSettingsSerializer(serializers.ModelSerializer):
@@ -38,11 +45,16 @@ class UserSettingsSerializer(serializers.ModelSerializer):
         return ret
 
     def validate(self, attrs):
-        preferred_unit = attrs.get("preferred_unit", self.instance.preferred_unit if self.instance else "kg")
+        preferred_unit = attrs.get("preferred_unit")
+        if preferred_unit is None:
+            preferred_unit = (
+                self.instance.preferred_unit if self.instance else "kg"
+            )
         if "target_weight" in attrs:
             target_weight = attrs["target_weight"]
             if preferred_unit == "lb":
                 # Convert target_weight in lb to kg for DB storage
-                attrs["target_weight"] = round(target_weight * Decimal("0.45359237"), 2)
+                attrs["target_weight"] = round(
+                    target_weight * Decimal("0.45359237"), 2
+                )
         return attrs
-

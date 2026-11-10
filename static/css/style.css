@@ -352,6 +352,11 @@ md-outlined-select {
   display: inline-flex;
 }
 
+.pagination-ellipsis {
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 0 4px;
+}
+
 /* Social Buttons */
 .social-login-btn {
   display: flex;

@@ -11,13 +11,13 @@ wait
   <h2 class="card-title">new entry</h2>
   <form method="post" id="weight-entry-form" novalidate>
     {% csrf_token %}
-    
+
     {% if form.non_field_errors %}
-      <div style="color: var(--md-sys-color-error); margin-bottom: 12px; font-size: 14px;">
-        {% for error in form.non_field_errors %}
-          <div>{{ error }}</div>
-        {% endfor %}
-      </div>
+    <div style="color: var(--md-sys-color-error); margin-bottom: 12px; font-size: 14px">
+      {% for error in form.non_field_errors %}
+      <div>{{ error }}</div>
+      {% endfor %}
+    </div>
     {% endif %}
 
     <div class="form-field">
@@ -25,6 +25,7 @@ wait
         label="weight"
         type="number"
         step="any"
+        min="0.01"
         name="weight"
         id="id_weight"
         value="{{ form.weight.value|default:'' }}"
@@ -58,7 +59,6 @@ wait
         id="id_timestamp"
         name="timestamp"
         required
-        max="{{ todaymax|date:'Y-m-d\\TH:i:s' }}"
         step="1"
         {% if form.timestamp.errors %}error error-text="{{ form.timestamp.errors.0 }}"{% endif %}
       >
@@ -66,7 +66,7 @@ wait
     </div>
 
     <div class="mt-3">
-      <md-filled-button type="submit" style="width: 100%;">save entry</md-filled-button>
+      <md-filled-button type="submit" style="width: 100%">save entry</md-filled-button>
     </div>
   </form>
 </div>
@@ -74,83 +74,103 @@ wait
 {# weight history card #}
 <div class="card">
   <h2 class="card-title" id="chart-card-title">weight history</h2>
-  
+
   <div class="chart-filter-container">
     <div class="segmented-control" role="group" aria-label="filter weight history by time range">
-      <button class="segmented-control-btn active" data-range="7d">7d</button>
-      <button class="segmented-control-btn" data-range="1m">1m</button>
-      <button class="segmented-control-btn" data-range="3m">3m</button>
-      <button class="segmented-control-btn" data-range="6m">6m</button>
-      <button class="segmented-control-btn" data-range="1y">1y</button>
-      <button class="segmented-control-btn" data-range="all">all</button>
+      <button class="segmented-control-btn active" data-range="7d" aria-pressed="true">7d</button>
+      <button class="segmented-control-btn" data-range="1m" aria-pressed="false">1m</button>
+      <button class="segmented-control-btn" data-range="3m" aria-pressed="false">3m</button>
+      <button class="segmented-control-btn" data-range="6m" aria-pressed="false">6m</button>
+      <button class="segmented-control-btn" data-range="1y" aria-pressed="false">1y</button>
+      <button class="segmented-control-btn" data-range="all" aria-pressed="false">all</button>
     </div>
   </div>
 
-  <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+  <div style="display: flex; flex-direction: column; align-items: center; width: 100%">
     {{ all_entries|json_script:"entries-data" }}
-    <div
-      style="position: relative; width: 100%; max-width: 600px; height: 300px"
-    >
-      <canvas id="weightChart" style="width: 100%; height: 100%" role="img" aria-label="line chart showing weight history over time">
-        <p>your weight entries are shown in a line chart over different selectable time periods. you can see all entries in detail on the show all entries page.</p>
+    <div style="position: relative; width: 100%; max-width: 600px; height: 300px">
+      <canvas
+        id="weightChart"
+        style="width: 100%; height: 100%"
+        role="img"
+        aria-label="line chart showing weight history over time"
+      >
+        <p>
+          your weight entries are shown in a line chart over different selectable
+          time periods. you can see all entries in detail on the show all entries
+          page.
+        </p>
       </canvas>
     </div>
     <div id="chart-status" class="text-muted text-center small mt-3"></div>
   </div>
   <div class="mt-4">
-    <a href="{% url 'all_entries' %}" style="text-decoration: none; display: block;">
-      <md-outlined-button style="width: 100%;">show all entries</md-outlined-button>
+    <a href="{% url 'all_entries' %}" style="text-decoration: none; display: block">
+      <md-outlined-button tabindex="-1" style="width: 100%">show all entries</md-outlined-button>
     </a>
   </div>
 </div>
 
 {% endblock %}
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"
+  integrity="sha384-b0GXujLkk9eYYSmcSfoyZbfyElGAQnDyY0skCHSG6w3JgTMFnz11ggrTAr7seu9f"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"
+  integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws"
+  crossorigin="anonymous"
+></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Get style custom properties for Chart theme coordination
     const style = getComputedStyle(document.documentElement);
-    const primaryColor = style.getPropertyValue('--md-sys-color-primary').trim() || '#006a60';
-    const outlineColor = style.getPropertyValue('--md-sys-color-outline-variant').trim() || '#bec9c6';
-    const textColor = style.getPropertyValue('--md-sys-color-on-background').trim() || '#191c1b';
-    const trendColor = '#f59e0b';
-    const targetColor = '#64748b';
-    const preferredUnit = "{{ preferred_unit|default:'kg' }}";
+    const primaryColor =
+      style.getPropertyValue("--md-sys-color-primary").trim() || "#006a60";
+    const outlineColor =
+      style.getPropertyValue("--md-sys-color-outline-variant").trim() ||
+      "#bec9c6";
+    const textColor =
+      style.getPropertyValue("--md-sys-color-on-background").trim() || "#191c1b";
+    const trendColor = "#f59e0b";
+    const targetColor = "#64748b";
+    const preferredUnit = "{{ preferred_unit|default:'kg'|escapejs }}";
     const rawTargetWeightKg = {{ target_weight|default:75.0 }};
-    const assignedTargetWeight = preferredUnit === "lb" ? rawTargetWeightKg / 0.45359237 : rawTargetWeightKg;
+    const assignedTargetWeight =
+      preferredUnit === "lb" ? rawTargetWeightKg / 0.45359237 : rawTargetWeightKg;
 
-    // prefill timestamp
+    const pad = (n) => String(n).padStart(2, "0");
+    const localDateTimeString = (date) =>
+      [date.getFullYear(), pad(date.getMonth() + 1), pad(date.getDate())].join(
+        "-",
+      ) +
+      "T" +
+      [pad(date.getHours()), pad(date.getMinutes()), pad(date.getSeconds())].join(
+        ":",
+      );
+
+    // prefill and constrain the timestamp to "now" in the user's local timezone
     const tsInput = document.getElementById("id_timestamp");
     if (tsInput) {
-      const now = new Date();
-      const pad = (n) => String(n).padStart(2, "0");
-      const local =
-        [now.getFullYear(), pad(now.getMonth() + 1), pad(now.getDate())].join(
-          "-",
-        ) +
-        "T" +
-        [
-          pad(now.getHours()),
-          pad(now.getMinutes()),
-          pad(now.getSeconds()),
-        ].join(":");
-      tsInput.value = local;
+      const now = localDateTimeString(new Date());
+      tsInput.value = now;
+      tsInput.max = now;
     }
 
-    // on submit, append offset
     document
       .getElementById("weight-entry-form")
       .addEventListener("submit", (e) => {
         e.preventDefault();
-        const tsInput = document.getElementById("id_timestamp");
-
-        tsInput.value = new Date(tsInput.value).toISOString().slice(0, 19);
+        const parsed = new Date(tsInput.value);
+        if (Number.isNaN(parsed.getTime())) {
+          tsInput.focus();
+          return;
+        }
+        tsInput.value = parsed.toISOString().slice(0, 19);
         e.target.submit();
       });
 
-    // render weight chart
     const entries = JSON.parse(
       document.getElementById("entries-data").textContent,
     ).reverse();
@@ -169,7 +189,7 @@ wait
       };
     });
     const ctx = document.getElementById("weightChart").getContext("2d");
-    let weightChart = new Chart(ctx, {
+    const weightChart = new Chart(ctx, {
       type: "line",
       data: {
         datasets: [
@@ -184,7 +204,7 @@ wait
             pointBorderColor: primaryColor,
           },
           {
-            label: "avg weight",
+            label: "running average",
             data: [],
             fill: false,
             borderColor: trendColor,
@@ -194,7 +214,7 @@ wait
             borderDash: [6, 4],
           },
           {
-            label: "assigned target",
+            label: "target weight",
             data: [],
             fill: false,
             borderColor: targetColor,
@@ -209,52 +229,45 @@ wait
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: true, position: 'bottom' },
+          legend: { display: true, position: "bottom" },
           tooltip: {
             callbacks: {
-              label: function(context) {
+              label: function (context) {
                 const dp = context.raw;
-                if (dp && dp.originalWeight !== undefined && dp.originalUnit !== undefined) {
+                if (
+                  dp &&
+                  dp.originalWeight !== undefined &&
+                  dp.originalUnit !== undefined
+                ) {
                   const otherUnit = preferredUnit === "kg" ? "lb" : "kg";
-                  const otherValue = preferredUnit === "kg" ? context.parsed.y / 0.45359237 : context.parsed.y * 0.45359237;
+                  const otherValue =
+                    preferredUnit === "kg"
+                      ? context.parsed.y / 0.45359237
+                      : context.parsed.y * 0.45359237;
                   return `weight: ${dp.originalWeight} ${dp.originalUnit} (${context.parsed.y.toFixed(2)} ${preferredUnit} / ${otherValue.toFixed(2)} ${otherUnit})`;
                 }
                 return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} ${preferredUnit}`;
-              }
-            }
-          }
+              },
+            },
+          },
         },
         scales: {
           x: {
             type: "time",
-            time: {
-              // Set dynamically
-            },
-            grid: {
-              color: outlineColor,
-            },
-            ticks: {
-              color: textColor,
-            },
-            title: {
-              display: true,
-              text: "time",
-              color: textColor,
-            },
+            time: {},
+            grid: { color: outlineColor },
+            ticks: { color: textColor },
+            title: { display: true, text: "time", color: textColor },
           },
           y: {
             display: true,
-            grid: {
-              color: outlineColor,
-            },
-            ticks: {
-              color: textColor,
-            },
+            grid: { color: outlineColor },
+            ticks: { color: textColor },
             title: {
               display: true,
               text: `weight (${preferredUnit})`,
               color: textColor,
-            }
+            },
           },
         },
       },
@@ -300,21 +313,26 @@ wait
         timeUnit = undefined; // Auto-scale
       }
 
-      const filteredData = cutoff 
-        ? dataPoints.filter(dp => new Date(dp.x) >= cutoff)
+      const filteredData = cutoff
+        ? dataPoints.filter((dp) => new Date(dp.x) >= cutoff)
         : dataPoints;
       const averageWeight = getAverageWeight(filteredData);
 
+      // Cumulative average makes the trend line follow the data instead of
+      // being a single flat value.
+      let runningTotal = 0;
+      const runningAverage = filteredData.map((dp, index) => {
+        runningTotal += dp.y;
+        return { x: dp.x, y: runningTotal / (index + 1) };
+      });
+
       weightChart.data.datasets[0].data = filteredData;
-      weightChart.data.datasets[1].data = filteredData.map((dp) => ({
-        x: dp.x,
-        y: averageWeight,
-      }));
+      weightChart.data.datasets[1].data = runningAverage;
       weightChart.data.datasets[2].data = filteredData.map((dp) => ({
         x: dp.x,
         y: assignedTargetWeight,
       }));
-      
+
       if (timeUnit) {
         weightChart.options.scales.x.time.unit = timeUnit;
       } else {
@@ -324,8 +342,11 @@ wait
       weightChart.update();
 
       if (statusEl) {
-        const averageLabel = averageWeight !== null ? ` • avg ${averageWeight.toFixed(1)} ${preferredUnit}` : '';
-        statusEl.textContent = `showing ${filteredData.length} entry${filteredData.length === 1 ? '' : 's'}${averageLabel}`;
+        const averageLabel =
+          averageWeight !== null
+            ? ` • avg ${averageWeight.toFixed(1)} ${preferredUnit}`
+            : "";
+        statusEl.textContent = `showing ${filteredData.length} entry${filteredData.length === 1 ? "" : "s"}${averageLabel}`;
       }
     }
 
@@ -342,32 +363,34 @@ wait
     function getStoredChartRange() {
       try {
         const storedRange = localStorage.getItem(chartRangeStorageKey);
-        return storedRange || "7d";
+        const validRanges = ["7d", "1m", "3m", "6m", "1y", "all"];
+        return validRanges.includes(storedRange) ? storedRange : "7d";
       } catch (error) {
         console.warn("could not read chart range", error);
         return "7d";
       }
     }
 
-    // Add click listeners to filter buttons
     const filterButtons = document.querySelectorAll(".segmented-control-btn");
-    filterButtons.forEach(btn => {
+    const setActiveRange = (range) => {
+      filterButtons.forEach((button) => {
+        const isActive = button.getAttribute("data-range") === range;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+    };
+
+    filterButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        filterButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
         const range = btn.getAttribute("data-range");
         persistChartRange(range);
+        setActiveRange(range);
         updateChart(range);
       });
     });
 
     const savedRange = getStoredChartRange();
-    const initialButton = document.querySelector(`.segmented-control-btn[data-range="${savedRange}"]`);
-    if (initialButton) {
-      filterButtons.forEach(b => b.classList.remove("active"));
-      initialButton.classList.add("active");
-    }
-
+    setActiveRange(savedRange);
     updateChart(savedRange);
   });
 </script>

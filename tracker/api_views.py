@@ -1,10 +1,9 @@
-from rest_framework import permissions, viewsets, status
-from rest_framework.views import APIView
+from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import WeightEntry, UserSettings
-from .serializers import WeightEntrySerializer, UserSettingsSerializer
-
+from .models import UserSettings, WeightEntry
+from .serializers import UserSettingsSerializer, WeightEntrySerializer
 
 
 class WeightEntryViewSet(viewsets.ModelViewSet):
@@ -14,6 +13,8 @@ class WeightEntryViewSet(viewsets.ModelViewSet):
 
     serializer_class = WeightEntrySerializer
     permission_classes = [permissions.IsAuthenticated]
+    # Used by drf-spectacular to infer the integer primary key type.
+    queryset = WeightEntry.objects.all()
 
     def get_queryset(self):
         """
@@ -37,15 +38,19 @@ class UserSettingsView(APIView):
     serializer_class = UserSettingsSerializer
 
     def get(self, request):
-        settings, _ = UserSettings.objects.get_or_create(user=request.user)
-        serializer = UserSettingsSerializer(settings)
+        user_settings, _ = UserSettings.objects.get_or_create(user=request.user)
+        serializer = UserSettingsSerializer(user_settings)
         return Response(serializer.data)
 
     def put(self, request):
-        settings, _ = UserSettings.objects.get_or_create(user=request.user)
-        serializer = UserSettingsSerializer(settings, data=request.data, partial=True)
+        user_settings, _ = UserSettings.objects.get_or_create(user=request.user)
+        serializer = UserSettingsSerializer(
+            user_settings, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def patch(self, request):
+        return self.put(request)

@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
@@ -60,12 +63,12 @@ def test_api_crud_operations(api_client, django_user_model):
 
     entry_id = response.data["id"]
 
-    # 2. List weight entries
+    # 2. List weight entries (paginated response)
     response = api_client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert len(response.data) == 1
-    assert response.data[0]["id"] == entry_id
-    assert response.data[0]["unit"] == "kg"
+    assert len(response.data["results"]) == 1
+    assert response.data["results"][0]["id"] == entry_id
+    assert response.data["results"][0]["unit"] == "kg"
 
     # 3. Retrieve weight entry
     detail_url = reverse("weightentry-detail", kwargs={"pk": entry_id})
@@ -95,7 +98,7 @@ def test_api_user_isolation(api_client, django_user_model):
     user1 = django_user_model.objects.create_user(username="user1", password="password")
     user2 = django_user_model.objects.create_user(username="user2", password="password")
 
-    token1 = Token.objects.create(user=user1)
+    Token.objects.create(user=user1)
     token2 = Token.objects.create(user=user2)
 
     # Create entry for user1
@@ -108,7 +111,7 @@ def test_api_user_isolation(api_client, django_user_model):
     url = reverse("weightentry-list")
     response = api_client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert len(response.data) == 0
+    assert len(response.data["results"]) == 0
 
     # Try to retrieve user1's entry (should return 404)
     detail_url = reverse("weightentry-detail", kwargs={"pk": entry.id})
@@ -125,24 +128,40 @@ def test_api_user_isolation(api_client, django_user_model):
 
 
 @pytest.mark.django_db
-def test_api_cors_headers(api_client):
+def test_api_cors_headers(api_client, settings):
     """
-    Test that CORS headers are present on API responses.
+    Test that CORS headers are only returned for configured origins.
     """
+    settings.CORS_ALLOW_ALL_ORIGINS = False
+    settings.CORS_ALLOWED_ORIGINS = ["http://localhost:8000"]
     url = reverse("weightentry-list")
-    response = api_client.get(url, HTTP_ORIGIN="http://localhost:3000")
 
-    # Since CORS_ALLOW_ALL_ORIGINS = True (due to DEBUG=True in test environment)
-    # The Access-Control-Allow-Origin header should be present and allow the origin.
-    assert "access-control-allow-origin" in response
-    assert response["access-control-allow-origin"] == "*"
+    allowed = api_client.get(url, HTTP_ORIGIN="http://localhost:8000")
+    assert allowed["access-control-allow-origin"] == "http://localhost:8000"
+
+    denied = api_client.get(url, HTTP_ORIGIN="http://evil.example.com")
+    assert "access-control-allow-origin" not in denied
 
 
 @pytest.mark.django_db
-def test_swagger_endpoints_accessible(api_client):
+def test_swagger_endpoints_require_auth(api_client):
+    """
+    Test that the schema and documentation endpoints require authentication.
+    """
+    for url_name in ("schema", "swagger-ui", "redoc"):
+        response = api_client.get(reverse(url_name))
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_swagger_endpoints_accessible(api_client, django_user_model):
     """
     Test that schema, swagger-ui, and redoc endpoints are accessible.
     """
+    user = django_user_model.objects.create_user(username="apiuser", password="password")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+
     schema_url = reverse("schema")
     swagger_url = reverse("swagger-ui")
     redoc_url = reverse("redoc")
@@ -186,5 +205,38 @@ def test_api_user_settings(api_client, django_user_model):
     api_client.credentials()  # Clear credentials
     response = api_client.get(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_api_rejects_future_timestamp(api_client, django_user_model):
+    """The API should reject weight entries with future timestamps."""
+    user = django_user_model.objects.create_user(username="apiuser", password="password")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+
+    future = (timezone.now() + timedelta(days=1)).isoformat()
+    response = api_client.post(
+        reverse("weightentry-list"),
+        {"weight": "75.00", "timestamp": future},
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "timestamp" in response.data
+
+
+@pytest.mark.django_db
+def test_api_rejects_non_positive_weight(api_client, django_user_model):
+    """The API should reject weights that are zero or negative."""
+    user = django_user_model.objects.create_user(username="apiuser", password="password")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+
+    for weight in ("0", "-5.00"):
+        response = api_client.post(
+            reverse("weightentry-list"),
+            {"weight": weight},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "weight" in response.data
 
 

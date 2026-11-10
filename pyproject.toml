@@ -1,30 +1,22 @@
 [project]
 name = "wait"
-version = "1.11.0"
-description = " weight tracking app "
+version = "1.12.0"
+description = "weight tracking app"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "asgiref==3.8.1",
-    "crispy-bootstrap5==2025.4",
-    "Django==5.2",
-    "django-crispy-forms==2.4",
-    "packaging==25.0",
+    "Django~=5.2.0",
+    "django-allauth==65.7.0",
+    "django-cors-headers>=4.9.0",
+    "djangorestframework>=3.17.1",
+    "drf-spectacular>=0.29.0",
+    "gunicorn",
     "psycopg2-binary==2.9.10",
     "python-decouple==3.8",
-    "setuptools==80.3.0",
-    "sqlparse==0.5.3",
-    "tzdata==2025.2",
-    "wheel==0.45.1",
-    "django-allauth==65.7.0",
-    "requests==2.32.3",
     "PyJWT==2.10.1",
     "cryptography==44.0.3",
-    "gunicorn",
+    "requests>=2.32.4",
     "whitenoise",
-    "djangorestframework>=3.17.1",
-    "django-cors-headers>=4.9.0",
-    "drf-spectacular>=0.29.0",
 ]
 
 [tool.uv]
@@ -36,3 +28,11 @@ dev = [
     "pytest",
     "pytest-django",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["tracker/migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

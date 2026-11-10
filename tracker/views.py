@@ -1,33 +1,30 @@
 """
 views for the tracker app.
 """
+
 import csv
-from datetime import datetime, time
 
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.timezone import localtime
-from django.views.generic.edit import CreateView
+from django.views.decorators.http import require_POST
 
-from tracker.forms import CustomUserCreationForm, WeightEntryForm, UserSettingsForm
+from tracker.forms import UserSettingsForm, WeightEntryForm
 
-from .models import WeightEntry, UserSettings  # Assuming WeightEntry is your model
-
+from .models import UserSettings, WeightEntry
 
 
 @login_required
 def index(request: HttpRequest) -> HttpResponse:
     """
-    View for the index page. Displays the weight entry form,
-    the last 10 weight entries for the logged-in user,
-    and handles form submissions.
+    View for the index page. Displays the weight entry form, the weight
+    history chart and handles form submissions.
     Requires user to be logged in.
     """
-    settings, _ = UserSettings.objects.get_or_create(user=request.user)
+    user_settings, _ = UserSettings.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
         form = WeightEntryForm(request.POST)
@@ -36,10 +33,13 @@ def index(request: HttpRequest) -> HttpResponse:
             weight_entry.user = request.user
             weight_entry.save()
 
-            return redirect(reverse("index"))
+            return redirect("index")
     else:
-        form = WeightEntryForm(initial={"unit": settings.preferred_unit})
-    all_entries = WeightEntry.objects.filter(user=request.user)
+        form = WeightEntryForm(initial={"unit": user_settings.preferred_unit})
+
+    all_entries = WeightEntry.objects.filter(user=request.user).only(
+        "weight", "unit", "timestamp"
+    )
     all_entries_serialized = [
         {
             "weight": float(entry.weight),
@@ -51,13 +51,11 @@ def index(request: HttpRequest) -> HttpResponse:
     context = {
         "form": form,
         "all_entries": all_entries_serialized,
-        "todaymax": datetime.combine(timezone.now(), time.max),
-        "target_weight": float(settings.target_weight),
-        "preferred_unit": settings.preferred_unit,
+        "target_weight": float(user_settings.target_weight),
+        "preferred_unit": user_settings.preferred_unit,
     }
 
     return render(request, "tracker/index.html", context)
-
 
 
 @login_required
@@ -67,24 +65,20 @@ def all_entries(request: HttpRequest) -> HttpResponse:
     """
     entry_list = WeightEntry.objects.filter(user=request.user).order_by("-timestamp")
     paginator = Paginator(entry_list, 10)
-    page_number = request.GET.get("page")
-
-    try:
-        page_obj = paginator.get_page(page_number)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        page_obj = paginator.get_page(1)
-    except EmptyPage:
-        # If page is out of range (e.g. 9999), deliver last page of results.
-        page_obj = paginator.get_page(paginator.num_pages)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    page_range = list(
+        paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
+    )
 
     context = {
         "page_obj": page_obj,
+        "page_range": page_range,
     }
     return render(request, "tracker/all_entries.html", context)
 
 
 @login_required
+@require_POST
 def delete_entry(request: HttpRequest, entry_id: int) -> HttpResponse:
     """
     View to delete a specific weight entry.
@@ -111,20 +105,9 @@ def edit_entry(request: HttpRequest, entry_id: int) -> HttpResponse:
     context = {
         "form": form,
         "entry": entry,
-        "todaymax": datetime.combine(timezone.now(), time.max),
     }
 
     return render(request, "tracker/edit_entry.html", context)
-
-
-class SignUpView(CreateView):
-    """
-    view for user sign up.
-    """
-
-    form_class = CustomUserCreationForm
-    success_url = reverse_lazy("login")
-    template_name = "registration/signup.html"
 
 
 @login_required
@@ -133,7 +116,7 @@ def export_entries_csv(request: HttpRequest) -> HttpResponse:
     view to export all weight entries as a csv file.
     """
     response = HttpResponse(content_type="text/csv")
-    now = datetime.now()
+    now = timezone.now()
     filename = f"wait_{now.strftime('%Y-%m-%d_%H%M%S')}.csv"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
@@ -143,7 +126,9 @@ def export_entries_csv(request: HttpRequest) -> HttpResponse:
     # Fetch all entries and write them to the CSV
     entries = WeightEntry.objects.filter(user=request.user).order_by("timestamp")
     for entry in entries:
-        writer.writerow([entry.timestamp, entry.weight, entry.unit])
+        writer.writerow(
+            [localtime(entry.timestamp).isoformat(), entry.weight, entry.unit]
+        )
 
     return response
 
@@ -153,13 +138,12 @@ def settings_view(request: HttpRequest) -> HttpResponse:
     """
     view to load and update user preferences.
     """
-    settings, _ = UserSettings.objects.get_or_create(user=request.user)
+    user_settings, _ = UserSettings.objects.get_or_create(user=request.user)
     if request.method == "POST":
-        form = UserSettingsForm(request.POST, instance=settings)
+        form = UserSettingsForm(request.POST, instance=user_settings)
         if form.is_valid():
             form.save()
             return redirect("index")
     else:
-        form = UserSettingsForm(instance=settings)
+        form = UserSettingsForm(instance=user_settings)
     return render(request, "tracker/settings.html", {"form": form})
-

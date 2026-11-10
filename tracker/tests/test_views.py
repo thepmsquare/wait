@@ -1,7 +1,58 @@
+from datetime import timedelta
+
 import pytest
 from django.urls import reverse
 from django.utils import timezone
+
 from tracker.models import WeightEntry
+
+
+@pytest.mark.django_db
+def test_auth_pages_render(client):
+    """The allauth login and signup pages should render."""
+    assert client.get(reverse("account_login")).status_code == 200
+    assert client.get(reverse("account_signup")).status_code == 200
+    assert client.get(reverse("account_reset_password")).status_code == 200
+
+
+@pytest.mark.django_db
+def test_login_flow(client, django_user_model):
+    """Users can log in through the allauth login form."""
+    django_user_model.objects.create_user(username="testuser", password="password")
+
+    response = client.post(
+        reverse("account_login"),
+        {"login": "testuser", "password": "password"},
+    )
+
+    assert response.status_code == 302
+    assert response.url == "/"
+
+
+@pytest.mark.django_db
+def test_signup_flow(client, django_user_model):
+    """Users can sign up through the allauth signup form."""
+    response = client.post(
+        reverse("account_signup"),
+        {
+            "username": "newuser",
+            "email": "newuser@example.com",
+            "password1": "S3curePassw0rd!xyz",
+            "password2": "S3curePassw0rd!xyz",
+        },
+    )
+
+    assert response.status_code == 302
+    assert django_user_model.objects.filter(username="newuser").exists()
+
+
+def test_service_worker_served_from_root(client):
+    """The service worker is served at /sw.js with root scope."""
+    response = client.get("/sw.js")
+
+    assert response.status_code == 200
+    assert response["Service-Worker-Allowed"] == "/"
+    assert response["Content-Type"] == "application/javascript"
 
 
 @pytest.mark.django_db
@@ -63,10 +114,12 @@ def test_index_view_create_entry_different_units(client, django_user_model):
     user = django_user_model.objects.create_user(username="testuser", password="password")
     client.login(username="testuser", password="password")
 
+    timestamp = timezone.now().strftime("%Y-%m-%dT%H:%M:%S")
+
     # 1. Create entry with default unit (kg) by omitting unit or using kg
     response = client.post(
         reverse("index"),
-        {"weight": "82.50", "unit": "kg", "timestamp": timezone.now().strftime("%Y-%m-%dT%H:%M:%S")},
+        {"weight": "82.50", "unit": "kg", "timestamp": timestamp},
     )
     assert response.status_code == 302  # redirects on success
     assert WeightEntry.objects.filter(user=user, weight="82.50", unit="kg").exists()
@@ -74,7 +127,7 @@ def test_index_view_create_entry_different_units(client, django_user_model):
     # 2. Create entry with lb unit
     response = client.post(
         reverse("index"),
-        {"weight": "180.50", "unit": "lb", "timestamp": timezone.now().strftime("%Y-%m-%dT%H:%M:%S")},
+        {"weight": "180.50", "unit": "lb", "timestamp": timestamp},
     )
     assert response.status_code == 302
     assert WeightEntry.objects.filter(user=user, weight="180.50", unit="lb").exists()
@@ -147,4 +200,82 @@ def test_settings_view_get_and_post(client, django_user_model):
     assert response.status_code == 200
     form = response.context["form"]
     assert float(form.initial["target_weight"]) == 150.00
+
+
+@pytest.mark.django_db
+def test_delete_entry_requires_post(client, django_user_model):
+    """Deleting an entry must not happen through a GET request."""
+    user = django_user_model.objects.create_user(username="testuser", password="password")
+    client.login(username="testuser", password="password")
+    entry = WeightEntry.objects.create(user=user, weight=75)
+
+    url = reverse("delete_entry", kwargs={"entry_id": entry.id})
+    response = client.get(url)
+
+    assert response.status_code == 405
+    assert WeightEntry.objects.filter(id=entry.id).exists()
+
+
+@pytest.mark.django_db
+def test_delete_entry_post(client, django_user_model):
+    """An authenticated owner can delete an entry with a POST request."""
+    user = django_user_model.objects.create_user(username="testuser", password="password")
+    client.login(username="testuser", password="password")
+    entry = WeightEntry.objects.create(user=user, weight=75)
+
+    url = reverse("delete_entry", kwargs={"entry_id": entry.id})
+    response = client.post(url)
+
+    assert response.status_code == 302
+    assert not WeightEntry.objects.filter(id=entry.id).exists()
+
+
+@pytest.mark.django_db
+def test_delete_entry_cannot_delete_other_users_entry(client, django_user_model):
+    """Users may only delete their own entries."""
+    owner = django_user_model.objects.create_user(username="owner", password="password")
+    other = django_user_model.objects.create_user(username="other", password="password")
+    client.login(username="other", password="password")
+    entry = WeightEntry.objects.create(user=owner, weight=75)
+
+    url = reverse("delete_entry", kwargs={"entry_id": entry.id})
+    response = client.post(url)
+
+    assert response.status_code == 404
+    assert WeightEntry.objects.filter(id=entry.id).exists()
+    assert not WeightEntry.objects.filter(user=other).exists()
+
+
+@pytest.mark.django_db
+def test_index_rejects_future_timestamp(client, django_user_model):
+    """Entries cannot be recorded in the future."""
+    user = django_user_model.objects.create_user(username="testuser", password="password")
+    client.login(username="testuser", password="password")
+    future = (timezone.now() + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    response = client.post(
+        reverse("index"),
+        {"weight": "75.00", "unit": "kg", "timestamp": future},
+    )
+
+    assert response.status_code == 200
+    assert response.context["form"].errors["timestamp"]
+    assert not WeightEntry.objects.filter(user=user).exists()
+
+
+@pytest.mark.django_db
+def test_index_rejects_non_positive_weight(client, django_user_model):
+    """Weights must be greater than zero."""
+    user = django_user_model.objects.create_user(username="testuser", password="password")
+    client.login(username="testuser", password="password")
+    timestamp = timezone.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+    response = client.post(
+        reverse("index"),
+        {"weight": "0", "unit": "kg", "timestamp": timestamp},
+    )
+
+    assert response.status_code == 200
+    assert response.context["form"].errors["weight"]
+    assert not WeightEntry.objects.filter(user=user).exists()
 

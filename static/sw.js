@@ -1,70 +1,73 @@
-const CACHE_NAME = 'wait-cache-v2';
+const CACHE_NAME = "wait-cache-v3";
+
+// Only same-origin static assets are cached. Authenticated pages are never
+// stored so that private weight data cannot be served from a shared device's
+// cache.
 const STATIC_ASSETS = [
-  '/',
-  '/static/manifest.json',
-  '/static/favicon.ico',
-  '/static/css/style.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js',
+  "/static/css/style.css",
+  "/static/favicon.ico",
+  "/static/manifest.json",
+  "/static/icons/icon-192x192.png",
+  "/static/icons/icon-512x512.png",
 ];
 
-// install event - cache static assets
-self.addEventListener('install', (event) => {
+// install event - cache static assets (best effort)
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[service worker] caching static assets');
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(STATIC_ASSETS.map((asset) => cache.add(asset))),
+    ),
   );
   self.skipWaiting();
 });
 
 // activate event - cleanup old caches
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[service worker] clearing old cache:', cache);
+            console.log("[service worker] clearing old cache:", cache);
             return caches.delete(cache);
           }
-        })
-      );
-    })
+          return Promise.resolve();
+        }),
+      ),
+    ),
   );
   self.clients.claim();
 });
 
-// fetch event - stale-while-revalidate for assets, network-first for pages
-self.addEventListener('fetch', (event) => {
+// fetch event - stale-while-revalidate for same-origin static assets only
+self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // handle navigation requests (html pages) - network first
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
+  if (event.request.method !== "GET" || url.origin !== self.location.origin) {
     return;
   }
 
-  // handle static assets - stale-while-revalidate
+  // Never intercept navigations: they contain private, authenticated data.
+  if (event.request.mode === "navigate") {
+    return;
+  }
+
+  if (!url.pathname.startsWith("/static/")) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+        if (networkResponse.ok) {
+          const copy = networkResponse.clone();
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(event.request, copy));
+        }
         return networkResponse;
       });
       return cachedResponse || fetchPromise;
-    })
+    }),
   );
 });

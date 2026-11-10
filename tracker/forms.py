@@ -1,14 +1,15 @@
 from decimal import Decimal
+
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.utils import timezone
 
-from .models import WeightEntry, UserSettings
-
+from .models import UserSettings, WeightEntry
 
 
 class LowercaseFormMixin:
     """
-    Mixin to dynamically convert all form field labels and help texts to lowercase.
+    Mixin to dynamically convert all form field labels and help texts to
+    lowercase.
     """
 
     def __init__(self, *args, **kwargs):
@@ -18,15 +19,6 @@ class LowercaseFormMixin:
                 field.label = field.label.lower()
             if field.help_text:
                 field.help_text = field.help_text.lower()
-
-
-class CustomUserCreationForm(LowercaseFormMixin, UserCreationForm):
-    class Meta(UserCreationForm.Meta):
-        fields = UserCreationForm.Meta.fields + ("email",)
-
-
-class CustomAuthenticationForm(LowercaseFormMixin, AuthenticationForm):
-    pass
 
 
 class WeightEntryForm(LowercaseFormMixin, forms.ModelForm):
@@ -45,11 +37,18 @@ class WeightEntryForm(LowercaseFormMixin, forms.ModelForm):
             "timestamp": forms.DateTimeInput(attrs={"type": "datetime-local"}),
         }
 
+    def clean_timestamp(self):
+        timestamp = self.cleaned_data["timestamp"]
+        if timestamp > timezone.now():
+            raise forms.ValidationError("timestamp cannot be in the future.")
+        return timestamp
+
 
 class UserSettingsForm(LowercaseFormMixin, forms.ModelForm):
     """
     Form for updating UserSettings.
-    Handles dynamic conversion of target_weight to/from kg based on preferred_unit.
+    Handles dynamic conversion of target_weight to/from kg based on
+    preferred_unit.
     """
 
     class Meta:
@@ -76,4 +75,3 @@ class UserSettingsForm(LowercaseFormMixin, forms.ModelForm):
         if commit:
             instance.save()
         return instance
-
