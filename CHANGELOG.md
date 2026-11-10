@@ -1,5 +1,17 @@
 # changelog
 
+## v1.13.0
+
+- ui: refresh Material 3 styling (spacing, elevation, focus rings, dark mode,
+  responsive layout) and tighten accessibility across all pages.
+- ux: make the dashboard single-purpose — weight entry first, with a large
+  save action, collapsed timestamp, last-entry context, and a save
+  confirmation showing the change since the previous reading.
+- ux: move settings and logout into an account menu; show chart range,
+  history and full entries as secondary actions.
+- a11y: remove nested interactive elements, add live regions, proper labels,
+  table captions, keyboard navigation, and reduced-motion support.
+
 ## v1.12.0
 
 - security: `DEBUG` now defaults to `false`; production settings (secure

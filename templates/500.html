@@ -3,11 +3,12 @@
 {% block title %}something went wrong | wait{% endblock %}
 
 {% block content %}
-<div class="card text-center">
-  <h1>something went wrong</h1>
-  <p class="text-muted">an unexpected error occurred. please try again.</p>
-  <p>
-    <a href="/">back to the tracker</a>
-  </p>
-</div>
+<section class="card text-center" aria-labelledby="error-title">
+  <div class="empty-state">
+    <span class="material-symbols-outlined" aria-hidden="true">error</span>
+    <h1 id="error-title">something went wrong</h1>
+    <p class="text-muted">an unexpected error occurred. please try again.</p>
+    <md-filled-button href="/">back to the tracker</md-filled-button>
+  </div>
+</section>
 {% endblock %}

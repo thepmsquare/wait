@@ -3,11 +3,12 @@
 {% block title %}not found | wait{% endblock %}
 
 {% block content %}
-<div class="card text-center">
-  <h1>not found</h1>
-  <p class="text-muted">the page you were looking for does not exist.</p>
-  <p>
-    <a href="{% url 'index' %}">back to the tracker</a>
-  </p>
-</div>
+<section class="card text-center" aria-labelledby="not-found-title">
+  <div class="empty-state">
+    <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+    <h1 id="not-found-title">not found</h1>
+    <p class="text-muted">the page you were looking for does not exist.</p>
+    <md-filled-button href="{% url 'index' %}">back to the tracker</md-filled-button>
+  </div>
+</section>
 {% endblock %}

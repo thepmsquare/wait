@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from django import forms
 from django.utils import timezone
 
@@ -47,31 +45,8 @@ class WeightEntryForm(LowercaseFormMixin, forms.ModelForm):
 class UserSettingsForm(LowercaseFormMixin, forms.ModelForm):
     """
     Form for updating UserSettings.
-    Handles dynamic conversion of target_weight to/from kg based on
-    preferred_unit.
     """
 
     class Meta:
         model = UserSettings
-        fields = ["target_weight", "preferred_unit"]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:
-            if self.instance.preferred_unit == "lb":
-                # Convert target_weight in kg to lb for display
-                lb_val = Decimal(self.instance.target_weight) / Decimal("0.45359237")
-                self.initial["target_weight"] = round(lb_val, 2)
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        target_weight = self.cleaned_data.get("target_weight")
-        preferred_unit = self.cleaned_data.get("preferred_unit")
-        if preferred_unit == "lb":
-            # Convert target_weight in lb to kg for DB storage
-            instance.target_weight = round(target_weight * Decimal("0.45359237"), 2)
-        else:
-            instance.target_weight = target_weight
-        if commit:
-            instance.save()
-        return instance
+        fields = ["preferred_unit"]

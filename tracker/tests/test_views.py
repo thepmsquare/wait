@@ -180,26 +180,20 @@ def test_settings_view_get_and_post(client, django_user_model):
     # 1. GET settings page
     response = client.get(reverse("settings"))
     assert response.status_code == 200
-    assert "form" in response.context
+    assert set(response.context["form"].fields) == {"preferred_unit"}
 
-    # 2. POST update to settings (preferred_unit='lb', target_weight=150)
-    # Since we post 150 lb, it should be converted to kg (150 * 0.45359237 = 68.04 kg) in the DB
-    response = client.post(
-        reverse("settings"),
-        {"target_weight": "150.00", "preferred_unit": "lb"}
-    )
+    # 2. POST update to settings
+    response = client.post(reverse("settings"), {"preferred_unit": "lb"})
     assert response.status_code == 302  # redirects on success
-    
+
     user.refresh_from_db()
     assert user.settings.preferred_unit == "lb"
-    # 150 * 0.45359237 = 68.03885... -> rounded to 68.04
-    assert float(user.settings.target_weight) == 68.04
 
-    # 3. GET settings page again, the display weight should be converted back to 150.00
+    # 3. GET settings page again, the saved unit is selected
     response = client.get(reverse("settings"))
     assert response.status_code == 200
     form = response.context["form"]
-    assert float(form.initial["target_weight"]) == 150.00
+    assert form.initial["preferred_unit"] == "lb"
 
 
 @pytest.mark.django_db
@@ -244,6 +238,52 @@ def test_delete_entry_cannot_delete_other_users_entry(client, django_user_model)
     assert response.status_code == 404
     assert WeightEntry.objects.filter(id=entry.id).exists()
     assert not WeightEntry.objects.filter(user=other).exists()
+
+
+@pytest.mark.django_db
+def test_index_shows_last_entry_context(client, django_user_model):
+    """The dashboard surfaces the most recent reading for quick orientation."""
+    user = django_user_model.objects.create_user(username="testuser", password="password")
+    client.login(username="testuser", password="password")
+    WeightEntry.objects.create(
+        user=user,
+        weight=74.2,
+        unit="kg",
+        timestamp=timezone.now() - timedelta(days=2),
+    )
+
+    response = client.get(reverse("index"))
+
+    assert response.status_code == 200
+    assert float(response.context["last_entry"].weight) == 74.2
+
+
+@pytest.mark.django_db
+def test_index_confirms_saved_entry_with_delta(client, django_user_model):
+    """Saving redirects back with a short confirmation including the change."""
+    user = django_user_model.objects.create_user(username="testuser", password="password")
+    client.login(username="testuser", password="password")
+    WeightEntry.objects.create(
+        user=user,
+        weight="80.00",
+        unit="kg",
+        timestamp=timezone.now() - timedelta(days=1),
+    )
+
+    response = client.post(
+        reverse("index"),
+        {
+            "weight": "79.00",
+            "unit": "kg",
+            "timestamp": timezone.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    rendered_messages = [str(message) for message in response.context["messages"]]
+    assert "saved 79 kg" in rendered_messages[0]
+    assert "-1.0 kg since last entry" in rendered_messages[0]
 
 
 @pytest.mark.django_db

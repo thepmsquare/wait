@@ -4,18 +4,24 @@
 
 {% block content %}
 
-<h1>edit entry</h1>
+<div class="page-header">
+  <h1>edit entry</h1>
+  <p>update this reading, then save.</p>
+</div>
 
-<div class="card" style="max-width: 500px; margin: 0 auto">
-  <h2 class="card-title">edit entry</h2>
+<section class="card" style="max-width: 32rem; margin-inline: auto" aria-labelledby="edit-entry-title">
+  <h2 class="card-title visually-hidden" id="edit-entry-title">edit entry form</h2>
   <form method="post" id="weight-edit-form" novalidate>
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-    <div style="color: var(--md-sys-color-error); margin-bottom: 12px; font-size: 14px">
-      {% for error in form.non_field_errors %}
-      <div>{{ error }}</div>
-      {% endfor %}
+    <div class="error-banner" role="alert" tabindex="-1">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <div>
+        {% for error in form.non_field_errors %}
+        <div>{{ error }}</div>
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
 
@@ -25,13 +31,16 @@
         type="number"
         step="any"
         min="0.01"
+        inputmode="decimal"
         name="weight"
         id="id_weight"
         value="{{ form.weight.value|default:'' }}"
         required
+        aria-describedby="weight-help"
         {% if form.weight.errors %}error error-text="{{ form.weight.errors.0 }}"{% endif %}
       >
       </md-outlined-text-field>
+      <p class="form-help" id="weight-help">greater than zero, e.g. 75.2</p>
     </div>
 
     <div class="form-field">
@@ -59,19 +68,21 @@
         name="timestamp"
         required
         step="1"
+        aria-describedby="timestamp-help"
         {% if form.timestamp.errors %}error error-text="{{ form.timestamp.errors.0 }}"{% endif %}
       >
       </md-outlined-text-field>
+      <p class="form-help" id="timestamp-help">cannot be in the future.</p>
     </div>
 
-    <div class="actions-row" style="margin-top: 16px">
-      <a href="{% url 'all_entries' %}" style="text-decoration: none">
-        <md-text-button tabindex="-1" type="button">cancel</md-text-button>
-      </a>
-      <md-filled-button type="submit">save changes</md-filled-button>
+    <div class="actions-row end">
+      <div class="actions-group">
+        <md-text-button href="{% url 'all_entries' %}">cancel</md-text-button>
+        <md-filled-button type="submit">save changes</md-filled-button>
+      </div>
     </div>
   </form>
-</div>
+</section>
 
 {% endblock %}
 
@@ -91,8 +102,6 @@
     const tsInput = document.getElementById("id_timestamp");
     if (tsInput) {
       tsInput.max = localDateTimeString(new Date());
-
-      // The server renders the stored UTC timestamp; convert it to local time.
       const initial = "{{ form.timestamp.value|date:'Y-m-d\\TH:i:s' }}";
       if (initial) {
         const parsed = new Date(initial + "Z");
@@ -102,9 +111,9 @@
       }
     }
 
-    document
-      .getElementById("weight-edit-form")
-      .addEventListener("submit", (e) => {
+    const formEl = document.getElementById("weight-edit-form");
+    if (formEl && tsInput) {
+      formEl.addEventListener("submit", (e) => {
         e.preventDefault();
         const parsed = new Date(tsInput.value);
         if (Number.isNaN(parsed.getTime())) {
@@ -112,8 +121,9 @@
           return;
         }
         tsInput.value = parsed.toISOString().slice(0, 19);
-        e.target.submit();
+        formEl.submit();
       });
+    }
   });
 </script>
 {% endblock %}

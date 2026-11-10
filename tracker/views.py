@@ -3,7 +3,9 @@ views for the tracker app.
 """
 
 import csv
+from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
@@ -15,6 +17,34 @@ from django.views.decorators.http import require_POST
 from tracker.forms import UserSettingsForm, WeightEntryForm
 
 from .models import UserSettings, WeightEntry
+
+KG_PER_LB = Decimal("0.45359237")
+
+
+def _format_weight(weight: Decimal) -> str:
+    """Show at most two decimals, without trailing zeros."""
+    return f"{weight:.2f}".rstrip("0").rstrip(".")
+
+
+def _entry_saved_message(entry: WeightEntry, previous: WeightEntry | None) -> str:
+    """
+    Build the short confirmation shown after a reading is saved.
+    """
+    message = f"saved {_format_weight(entry.weight)} {entry.unit}"
+    if previous is None:
+        return message
+
+    previous_weight = previous.weight
+    if previous.unit != entry.unit:
+        if entry.unit == "kg":
+            previous_weight *= KG_PER_LB
+        else:
+            previous_weight /= KG_PER_LB
+
+    delta = entry.weight - previous_weight
+    if abs(delta) < Decimal("0.05"):
+        return f"{message} · no change since last entry"
+    return f"{message} · {delta:+.1f} {entry.unit} since last entry"
 
 
 @login_required
@@ -29,10 +59,19 @@ def index(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = WeightEntryForm(request.POST)
         if form.is_valid():
+            previous_entry = (
+                WeightEntry.objects.filter(user=request.user)
+                .order_by("-timestamp")
+                .first()
+            )
             weight_entry = form.save(commit=False)
             weight_entry.user = request.user
             weight_entry.save()
 
+            messages.success(
+                request,
+                _entry_saved_message(weight_entry, previous_entry),
+            )
             return redirect("index")
     else:
         form = WeightEntryForm(initial={"unit": user_settings.preferred_unit})
@@ -48,10 +87,13 @@ def index(request: HttpRequest) -> HttpResponse:
         }
         for entry in all_entries
     ]
+    last_entry = (
+        WeightEntry.objects.filter(user=request.user).order_by("-timestamp").first()
+    )
     context = {
         "form": form,
         "all_entries": all_entries_serialized,
-        "target_weight": float(user_settings.target_weight),
+        "last_entry": last_entry,
         "preferred_unit": user_settings.preferred_unit,
     }
 

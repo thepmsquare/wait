@@ -8,11 +8,12 @@
       name="description"
       content="wait is a small, personal weight tracking app."
     />
+    <meta name="color-scheme" content="light dark" />
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}" />
     <link rel="manifest" href="{% static 'manifest.json' %}" />
     <title>{% block title %}wait{% endblock %}</title>
 
-    <!-- Google Fonts: Outfit -->
+    <!-- Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,80 +21,93 @@
       rel="stylesheet"
     />
 
-    <!-- Google Fonts: Material Symbols Outlined -->
+    <!-- Material Symbols Outlined -->
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
       rel="stylesheet"
     />
 
-    <!-- custom styling -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
 
-    <!-- Material Web scripts -->
     <script type="module" src="https://esm.run/@material/web@2.3.0/all.js"></script>
 
-    <!-- pwa meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="theme-color" content="#006a60" />
+    <meta name="theme-color" content="#006a60" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111413" media="(prefers-color-scheme: dark)" />
     {% block extra_css %}{% endblock %}
   </head>
   <body>
     <a href="#main-content" class="skip-link">skip to main content</a>
     <header>
       <nav class="navbar" aria-label="main navigation">
-        <a class="navbar-brand" href="/">
+        <a class="navbar-brand" href="/" aria-label="wait — home">
           <span
             class="material-symbols-outlined"
-            style="font-size: 28px; vertical-align: middle"
-            >monitoring</span
-          >
+            aria-hidden="true"
+            style="font-size: 28px; vertical-align: middle">monitoring</span>
           <span>wait</span>
         </a>
         <ul class="navbar-menu">
           {% if user.is_authenticated %}
           <li class="navbar-item">
-            <span class="navbar-text" style="margin-right: 12px">
-              welcome, {{ user.username }}!
-            </span>
-          </li>
-          <li class="navbar-item" style="margin-right: 8px">
-            <a href="{% url 'settings' %}" style="text-decoration: none">
-              <md-text-button tabindex="-1">settings</md-text-button>
-            </a>
-          </li>
-          <li class="navbar-item">
-            <form
-              method="post"
-              action="{% url 'account_logout' %}"
-              style="margin: 0; display: inline-flex"
-            >
-              {% csrf_token %}
-              <md-text-button tabindex="-1" type="submit">logout</md-text-button>
-            </form>
+            <details class="account-menu" id="account-menu">
+              <summary
+                class="account-trigger"
+                aria-label="account menu for {{ user.username }}"
+                aria-haspopup="true"
+              >
+                <span class="account-avatar" aria-hidden="true">{{ user.username|first|upper }}</span>
+              </summary>
+              <div class="account-panel" role="group" aria-label="account actions">
+                <p class="account-name small text-muted">
+                  signed in as <strong>{{ user.username }}</strong>
+                </p>
+                <md-text-button
+                  href="{% url 'settings' %}"
+                  class="account-action"
+                  {% if request.resolver_match.url_name == 'settings' %}aria-current="page"{% endif %}>
+                  <span slot="icon" class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">settings</span>
+                  settings
+                </md-text-button>
+                <form method="post" action="{% url 'account_logout' %}" class="account-action-form">
+                  {% csrf_token %}
+                  <md-text-button type="submit" class="account-action">
+                    <span slot="icon" class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">logout</span>
+                    logout
+                  </md-text-button>
+                </form>
+              </div>
+            </details>
           </li>
           {% else %}
-          <li class="navbar-item" style="margin-right: 8px">
-            <a href="{% url 'account_login' %}" style="text-decoration: none">
-              <md-text-button tabindex="-1">login</md-text-button>
-            </a>
+          <li class="navbar-item">
+            <md-text-button href="{% url 'account_login' %}">login</md-text-button>
           </li>
           <li class="navbar-item">
-            <a href="{% url 'account_signup' %}" style="text-decoration: none">
-              <md-filled-button tabindex="-1">sign up</md-filled-button>
-            </a>
+            <md-filled-button href="{% url 'account_signup' %}">sign up</md-filled-button>
           </li>
           {% endif %}
         </ul>
       </nav>
     </header>
 
-    <main id="main-content" class="container">
+    <main id="main-content" class="container" tabindex="-1">
+      {% if messages %}
+      <div class="toast-stack" role="status" aria-live="polite" aria-atomic="true">
+        {% for message in messages %}
+        <div class="toast toast-{{ message.tags|default:'info' }}">
+          <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+          <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
       <noscript>
-        <div class="card" role="alert">
+        <div class="card">
           <p class="text-muted">
             wait needs JavaScript for its form components and charts. Please
             enable JavaScript to use the app.
@@ -106,11 +120,38 @@
     <footer>
       <div class="footer-content">
         <span>wait by thepmsquare</span>
+        <span class="small">personal weight tracking</span>
       </div>
     </footer>
 
     {% block extra_js %}{% endblock %}
     <script>
+      (() => {
+        const menu = document.getElementById("account-menu");
+        if (!menu) return;
+
+        const closeMenu = () => {
+          menu.open = false;
+        };
+
+        menu.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && menu.open) {
+            closeMenu();
+            menu.querySelector("summary")?.focus();
+          }
+        });
+
+        document.addEventListener("click", (event) => {
+          if (menu.open && !menu.contains(event.target)) {
+            closeMenu();
+          }
+        });
+
+        menu.querySelectorAll(".account-panel a, .account-panel button").forEach((el) => {
+          el.addEventListener("click", closeMenu);
+        });
+      })();
+
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker

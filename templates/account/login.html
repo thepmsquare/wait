@@ -6,31 +6,36 @@
 <div class="grid-centered">
   <div class="auth-card-wrapper">
     <div class="card">
-      <h2 class="text-center mb-4" style="font-weight: 700; letter-spacing: -0.5px">
-        log in
-      </h2>
+      <div class="page-header">
+        <h2 style="font-weight: 700; letter-spacing: -0.02em; font-size: 1.5rem">
+          log in
+        </h2>
+        <p>welcome back. pick up where you left off.</p>
+      </div>
 
       <form method="post" novalidate>
         {% csrf_token %}
         {{ redirect_field }}
 
         {% if form.non_field_errors %}
-        <div style="color: var(--md-sys-color-error); margin-bottom: 16px; font-size: 14px">
-          {% for error in form.non_field_errors %}
-          <div>{{ error }}</div>
-          {% endfor %}
+        <div class="error-banner" role="alert" tabindex="-1">
+          <span class="material-symbols-outlined" aria-hidden="true">error</span>
+          <div>
+            {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+          </div>
         </div>
         {% endif %}
 
         {% for field in form %}
           {% if field.name == 'remember' %}
-          <div class="form-field" style="display: flex; align-items: center; gap: 8px">
+          <div class="remember-row">
             <input
               type="checkbox"
               name="{{ field.html_name }}"
               id="{{ field.id_for_label }}"
               {% if field.value %}checked{% endif %}
-              style="width: 18px; height: 18px; accent-color: var(--md-sys-color-primary)"
             />
             <label for="{{ field.id_for_label }}" class="small">{{ field.label|lower }}</label>
           </div>
@@ -40,13 +45,16 @@
               label="{{ field.label|lower }}"
               type="{% if 'password' in field.name %}password{% elif 'email' in field.name %}email{% else %}text{% endif %}"
               name="{{ field.html_name }}"
+              id="{{ field.id_for_label }}"
               value="{{ field.value|default:'' }}"
+              autocomplete="{% if field.name == 'password' %}current-password{% elif field.name == 'email' or field.name == 'login' %}username{% else %}off{% endif %}"
               {% if field.field.required %}required{% endif %}
               {% if field.errors %}error error-text="{{ field.errors.0 }}"{% endif %}
+              {% if field.help_text %}aria-describedby="{{ field.id_for_label }}-help"{% endif %}
             >
             </md-outlined-text-field>
             {% if field.help_text %}
-            <div class="small text-muted" style="padding: 2px 4px 0">
+            <div class="form-help" id="{{ field.id_for_label }}-help">
               {{ field.help_text|safe }}
             </div>
             {% endif %}
@@ -54,8 +62,8 @@
           {% endif %}
         {% endfor %}
 
-        <div class="mt-3">
-          <md-filled-button type="submit" style="width: 100%">log in</md-filled-button>
+        <div>
+          <md-filled-button type="submit" class="full-button">log in</md-filled-button>
         </div>
       </form>
 
@@ -64,7 +72,7 @@
       <a href="{% provider_login_url 'google' %}" class="social-login-btn">
         <img
           src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-          alt="google logo"
+          alt=""
           width="20"
           height="20"
         />
